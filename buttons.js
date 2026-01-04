@@ -578,7 +578,10 @@
 
     function createFolderButton(folder) {
         var firstBtnId = folder.buttons[0];
-        var firstBtn = allButtonsCache.find(function(b) { return getButtonId(b) === firstBtnId; });
+        var firstBtn = allButtonsOriginal.find(function(b) { return getButtonId(b) === firstBtnId; });
+        if (!firstBtn) {
+            firstBtn = allButtonsCache.find(function(b) { return getButtonId(b) === firstBtnId; });
+        }
         var icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
                 '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>' +
             '</svg>';
@@ -606,7 +609,10 @@
         var items = [];
         
         folder.buttons.forEach(function(btnId) {
-            var btn = allButtonsCache.find(function(b) { return getButtonId(b) === btnId; });
+            var btn = allButtonsOriginal.find(function(b) { return getButtonId(b) === btnId; });
+            if (!btn) {
+                btn = allButtonsCache.find(function(b) { return getButtonId(b) === btnId; });
+            }
             if (btn) {
                 var text = btn.find('span').text().trim();
                 var iconElement = btn.find('svg').first();
@@ -657,9 +663,12 @@
         var list = $('<div class="menu-edit-list"></div>');
         
         folder.buttons.forEach(function(btnId) {
-            var btn = allButtonsCache.find(function(b) { return getButtonId(b) === btnId; });
+            var btn = allButtonsOriginal.find(function(b) { return getButtonId(b) === btnId; });
+            if (!btn) {
+                btn = allButtonsCache.find(function(b) { return getButtonId(b) === btnId; });
+            }
             if (btn) {
-                var displayName = getButtonDisplayName(btn, allButtonsCache);
+                var displayName = getButtonDisplayName(btn, allButtonsOriginal);
                 var iconElement = btn.find('svg').first();
                 var icon = iconElement.length ? iconElement.clone() : $('<svg></svg>');
 
@@ -741,7 +750,10 @@
         var folderBtn = currentContainer.find('.button--folder[data-folder-id="' + folder.id + '"]');
         if (folderBtn.length) {
             var firstBtnId = folder.buttons[0];
-            var firstBtn = allButtonsCache.find(function(b) { return getButtonId(b) === firstBtnId; });
+            var firstBtn = allButtonsOriginal.find(function(b) { return getButtonId(b) === firstBtnId; });
+            if (!firstBtn) {
+                firstBtn = allButtonsCache.find(function(b) { return getButtonId(b) === firstBtnId; });
+            }
             
             if (firstBtn) {
                 var iconElement = firstBtn.find('svg').first();
@@ -803,14 +815,14 @@
             buttonsInFolders = buttonsInFolders.concat(folder.buttons);
         });
 
-        allButtonsCache.forEach(function(btn) {
+        allButtonsOriginal.forEach(function(btn) {
             var btnId = getButtonId(btn);
             
             if (buttonsInFolders.indexOf(btnId) !== -1) {
                 return;
             }
             
-            var displayName = getButtonDisplayName(btn, allButtonsCache);
+            var displayName = getButtonDisplayName(btn, allButtonsOriginal);
             var iconElement = btn.find('svg').first();
             var icon = iconElement.length ? iconElement.clone() : $('<svg></svg>');
 
