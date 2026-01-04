@@ -1,6 +1,6 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.0.0
+ * Версия: 1.0.1
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -251,6 +251,11 @@
         var itemOrder = getItemOrder();
         var visibleButtons = [];
         
+        var buttonsInFolders = [];
+        folders.forEach(function(folder) {
+            buttonsInFolders = buttonsInFolders.concat(folder.buttons);
+        });
+        
         if (itemOrder.length > 0) {
             var addedFolders = [];
             var addedButtons = [];
@@ -265,18 +270,21 @@
                         addedFolders.push(folder.id);
                     }
                 } else if (item.type === 'button') {
-                    var btn = currentButtons.find(function(b) { return getButtonId(b) === item.id; });
-                    if (btn && !btn.hasClass('hidden')) {
-                        targetContainer.append(btn);
-                        visibleButtons.push(btn);
-                        addedButtons.push(getButtonId(btn));
+                    var btnId = item.id;
+                    if (buttonsInFolders.indexOf(btnId) === -1) {
+                        var btn = currentButtons.find(function(b) { return getButtonId(b) === btnId; });
+                        if (btn && !btn.hasClass('hidden')) {
+                            targetContainer.append(btn);
+                            visibleButtons.push(btn);
+                            addedButtons.push(btnId);
+                        }
                     }
                 }
             });
             
             currentButtons.forEach(function(btn) {
                 var btnId = getButtonId(btn);
-                if (addedButtons.indexOf(btnId) === -1 && !btn.hasClass('hidden')) {
+                if (addedButtons.indexOf(btnId) === -1 && !btn.hasClass('hidden') && buttonsInFolders.indexOf(btnId) === -1) {
                     targetContainer.append(btn);
                     visibleButtons.push(btn);
                 }
@@ -291,7 +299,8 @@
             });
         } else {
             currentButtons.forEach(function(btn) {
-                if (!btn.hasClass('hidden')) {
+                var btnId = getButtonId(btn);
+                if (!btn.hasClass('hidden') && buttonsInFolders.indexOf(btnId) === -1) {
                     targetContainer.append(btn);
                     visibleButtons.push(btn);
                 }
@@ -685,7 +694,10 @@
             Lampa.Modal.close();
             Lampa.Noty.show('Папка "' + folderName + '" создана');
             
-            applyChanges();
+            if (currentContainer) {
+                currentContainer.data('buttons-processed', false);
+                reorderButtons(currentContainer);
+            }
             refreshController();
         });
 
@@ -1149,11 +1161,12 @@
             '.full-start__button { opacity: 0; }' +
             '.full-start__button.hidden { display: none !important; }' +
             '.button--folder { cursor: pointer; }' +
-            '.full-start-new__buttons { overflow-x: auto !important; overflow-y: hidden !important; flex-wrap: nowrap !important; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.3) transparent; }' +
-            '.full-start-new__buttons::-webkit-scrollbar { height: 6px; }' +
-            '.full-start-new__buttons::-webkit-scrollbar-track { background: transparent; }' +
-            '.full-start-new__buttons::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }' +
-            '.full-start-new__buttons::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.5); }' +
+            '.full-start-new__buttons { display: flex !important; overflow-x: auto !important; overflow-y: hidden !important; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.3) transparent; }' +
+            '.full-start-new__buttons::-webkit-scrollbar { height: 8px; }' +
+            '.full-start-new__buttons::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }' +
+            '.full-start-new__buttons::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.4); border-radius: 4px; }' +
+            '.full-start-new__buttons::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.6); }' +
+            '.full-start-new__buttons .full-start__button { flex-shrink: 0; }' +
             '.menu-edit-list__create-folder { background: rgba(100,200,100,0.2); }' +
             '.menu-edit-list__create-folder.focus { background: rgba(100,200,100,0.3); border: 3px solid rgba(255,255,255,0.8); }' +
             '.menu-edit-list__delete { width: 2.4em; height: 2.4em; display: flex; align-items: center; justify-content: center; cursor: pointer; }' +
