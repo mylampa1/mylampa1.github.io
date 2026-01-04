@@ -427,7 +427,63 @@
             currentButtons.forEach(function(btn) {
                 var btnId = getButtonId(btn);
                 if (addedButtons.indexOf(btnId) === -1 && !btn.hasClass('hidden') && buttonsInFolders.indexOf(btnId) === -1) {
-                    targetContainer.append(btn);
+                    var insertBefore = null;
+                    var btnType = getButtonType(btn);
+                    var typeOrder = ['online', 'torrent', 'trailer', 'book', 'reaction', 'other'];
+                    var btnTypeIndex = typeOrder.indexOf(btnType);
+                    if (btnTypeIndex === -1) btnTypeIndex = 999;
+                    
+                    if (btnId === 'modss_online_button' || btnId === 'showy_online_button') {
+                        var firstNonPriority = targetContainer.find('.full-start__button').not('.button--edit-order, .button--folder').filter(function() {
+                            var id = getButtonId($(this));
+                            return id !== 'modss_online_button' && id !== 'showy_online_button';
+                        }).first();
+                        
+                        if (firstNonPriority.length) {
+                            insertBefore = firstNonPriority;
+                        }
+                        
+                        if (btnId === 'showy_online_button') {
+                            var modsBtn = targetContainer.find('.full-start__button').filter(function() {
+                                return getButtonId($(this)) === 'modss_online_button';
+                            });
+                            if (modsBtn.length) {
+                                insertBefore = modsBtn.next();
+                                if (!insertBefore.length || insertBefore.hasClass('button--edit-order')) {
+                                    insertBefore = null;
+                                }
+                            }
+                        }
+                    } else {
+                        targetContainer.find('.full-start__button').not('.button--edit-order, .button--folder').each(function() {
+                            var existingBtn = $(this);
+                            var existingId = getButtonId(existingBtn);
+                            
+                            if (existingId === 'modss_online_button' || existingId === 'showy_online_button') {
+                                return true;
+                            }
+                            
+                            var existingType = getButtonType(existingBtn);
+                            var existingTypeIndex = typeOrder.indexOf(existingType);
+                            if (existingTypeIndex === -1) existingTypeIndex = 999;
+                            
+                            if (btnTypeIndex < existingTypeIndex) {
+                                insertBefore = existingBtn;
+                                return false;
+                            }
+                        });
+                    }
+                    
+                    if (insertBefore && insertBefore.length) {
+                        btn.insertBefore(insertBefore);
+                    } else {
+                        var editBtn = targetContainer.find('.button--edit-order');
+                        if (editBtn.length) {
+                            btn.insertBefore(editBtn);
+                        } else {
+                            targetContainer.append(btn);
+                        }
+                    }
                     visibleButtons.push(btn);
                 }
             });
