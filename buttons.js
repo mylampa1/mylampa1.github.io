@@ -965,6 +965,8 @@
 
             item.find('.menu-edit-list__delete').on('hover:enter', function() {
                 var folderId = folder.id;
+                var folderButtons = folder.buttons.slice();
+                
                 deleteFolder(folderId);
                 
                 var itemOrder = getItemOrder();
@@ -986,6 +988,20 @@
                 
                 setTimeout(function() {
                     if (currentContainer) {
+                        var targetContainer = currentContainer.find('.full-start-new__buttons');
+                        
+                        folderButtons.forEach(function(btnId) {
+                            var originalBtn = allButtonsOriginal.find(function(b) { return getButtonId(b) === btnId; });
+                            if (originalBtn) {
+                                var clonedBtn = originalBtn.clone(true, true);
+                                clonedBtn.css({
+                                    'opacity': '1',
+                                    'animation': 'none'
+                                });
+                                targetContainer.append(clonedBtn);
+                            }
+                        });
+                        
                         currentContainer.find('.button--play, .button--edit-order').remove();
                         currentContainer.data('buttons-processed', false);
                         reorderButtons(currentContainer);
@@ -1132,6 +1148,8 @@
         '</div>');
         
         resetBtn.on('hover:enter', function() {
+            var folders = getFolders();
+            
             Lampa.Storage.set('button_custom_order', []);
             Lampa.Storage.set('button_hidden', []);
             Lampa.Storage.set('button_folders', []);
@@ -1141,6 +1159,25 @@
             
             setTimeout(function() {
                 if (currentContainer) {
+                    var targetContainer = currentContainer.find('.full-start-new__buttons');
+                    
+                    var allFolderButtons = [];
+                    folders.forEach(function(folder) {
+                        allFolderButtons = allFolderButtons.concat(folder.buttons);
+                    });
+                    
+                    allFolderButtons.forEach(function(btnId) {
+                        var originalBtn = allButtonsOriginal.find(function(b) { return getButtonId(b) === btnId; });
+                        if (originalBtn) {
+                            var clonedBtn = originalBtn.clone(true, true);
+                            clonedBtn.css({
+                                'opacity': '1',
+                                'animation': 'none'
+                            });
+                            targetContainer.append(clonedBtn);
+                        }
+                    });
+                    
                     currentContainer.find('.button--play, .button--edit-order').remove();
                     currentContainer.data('buttons-processed', false);
                     reorderButtons(currentContainer);
