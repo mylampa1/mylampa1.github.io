@@ -1,6 +1,6 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.2.2
+ * Версия: 1.3.0
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -291,6 +291,53 @@
         allButtonsCache = allButtons;
         
         var folders = getFolders();
+        var foldersUpdated = false;
+        
+        folders.forEach(function(folder) {
+            var updatedButtons = [];
+            folder.buttons.forEach(function(oldBtnId) {
+                var found = false;
+                allButtons.forEach(function(btn) {
+                    var newBtnId = getButtonId(btn);
+                    if (newBtnId === oldBtnId) {
+                        updatedButtons.push(newBtnId);
+                        found = true;
+                    }
+                });
+                
+                if (!found) {
+                    allButtons.forEach(function(btn) {
+                        var text = btn.find('span').text().trim();
+                        var classes = btn.attr('class') || '';
+                        
+                        if ((oldBtnId.indexOf('modss') !== -1 || oldBtnId.indexOf('MODS') !== -1) &&
+                            (classes.indexOf('modss') !== -1 || text.indexOf('MODS') !== -1)) {
+                            updatedButtons.push(getButtonId(btn));
+                            found = true;
+                        } else if ((oldBtnId.indexOf('showy') !== -1 || oldBtnId.indexOf('Showy') !== -1) &&
+                                   (classes.indexOf('showy') !== -1 || text.indexOf('Showy') !== -1)) {
+                            updatedButtons.push(getButtonId(btn));
+                            found = true;
+                        }
+                    });
+                }
+                
+                if (!found) {
+                    updatedButtons.push(oldBtnId);
+                }
+            });
+            
+            if (updatedButtons.length !== folder.buttons.length || 
+                updatedButtons.some(function(id, i) { return id !== folder.buttons[i]; })) {
+                folder.buttons = updatedButtons;
+                foldersUpdated = true;
+            }
+        });
+        
+        if (foldersUpdated) {
+            setFolders(folders);
+        }
+        
         var buttonsInFolders = [];
         folders.forEach(function(folder) {
             buttonsInFolders = buttonsInFolders.concat(folder.buttons);
@@ -382,6 +429,12 @@
         }
 
         saveOrder();
+        
+        setTimeout(function() {
+            if (currentContainer) {
+                setupButtonNavigation(currentContainer);
+            }
+        }, 100);
     }
 
     function capitalize(str) {
@@ -592,6 +645,8 @@
     }
 
     function updateFolderIcon(folder) {
+        if (!folder.buttons || folder.buttons.length === 0) return;
+        
         var folderBtn = currentContainer.find('.button--folder[data-folder-id="' + folder.id + '"]');
         if (folderBtn.length) {
             var firstBtnId = folder.buttons[0];
@@ -603,6 +658,11 @@
                     var btnIcon = iconElement.clone();
                     folderBtn.find('svg').replaceWith(btnIcon);
                 }
+            } else {
+                var defaultIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+                    '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>' +
+                '</svg>';
+                folderBtn.find('svg').replaceWith(defaultIcon);
             }
         }
     }
@@ -1258,8 +1318,78 @@
         visibleButtons.push(editButton);
 
         applyButtonAnimation(visibleButtons);
+        
+        setTimeout(function() {
+            setupButtonNavigation(container);
+        }, 100);
 
         return true;
+    }
+
+    function setupButtonNavigation(container) {
+        var targetContainer = container.find('.full-start-new__buttons');
+        if (!targetContainer.length) return;
+        
+        var buttons = targetContainer.find('.full-start__button').not('.hidden');
+        if (buttons.length === 0) return;
+        
+        var rows = [];
+        var currentRow = [];
+        var lastTop = -1;
+        
+        buttons.each(function() {
+            var $btn = $(this);
+            var offset = $btn.offset();
+            if (!offset) return;
+            
+            var top = Math.round(offset.top);
+            
+            if (lastTop === -1) {
+                lastTop = top;
+            }
+            
+            if (Math.abs(top - lastTop) > 10) {
+                if (currentRow.length > 0) {
+                    rows.push(currentRow);
+                }
+                currentRow = [$btn];
+                lastTop = top;
+            } else {
+                currentRow.push($btn);
+            }
+        });
+        
+        if (currentRow.length > 0) {
+            rows.push(currentRow);
+        }
+        
+        if (rows.length < 2) return;
+        
+        rows.forEach(function(row, rowIndex) {
+            row.forEach(function($btn, colIndex) {
+                $btn.off('down up');
+                
+                if (rowIndex < rows.length - 1) {
+                    $btn.on('down', function() {
+                        var nextRow = rows[rowIndex + 1];
+                        var targetBtn = nextRow[Math.min(colIndex, nextRow.length - 1)];
+                        if (targetBtn) {
+                            Lampa.Controller.collectionFocus(targetBtn, targetContainer);
+                        }
+                    });
+                }
+                
+                if (rowIndex > 0) {
+                    $btn.on('up', function() {
+                        var prevRow = rows[rowIndex - 1];
+                        var targetBtn = prevRow[Math.min(colIndex, prevRow.length - 1)];
+                        if (targetBtn) {
+                            Lampa.Controller.collectionFocus(targetBtn, targetContainer);
+                        }
+                    });
+                }
+            });
+        });
     }
 
     function refreshController() {
@@ -1268,6 +1398,12 @@
         setTimeout(function() {
             try {
                 Lampa.Controller.toggle('full_start');
+                
+                if (currentContainer) {
+                    setTimeout(function() {
+                        setupButtonNavigation(currentContainer);
+                    }, 100);
+                }
             } catch(e) {}
         }, 50);
     }
