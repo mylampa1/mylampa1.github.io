@@ -990,6 +990,22 @@
                 
                 setItemOrder(newItemOrder);
                 
+                var customOrder = getCustomOrder();
+                var newCustomOrder = [];
+                for (var i = 0; i < customOrder.length; i++) {
+                    var found = false;
+                    for (var j = 0; j < folder.buttons.length; j++) {
+                        if (customOrder[i] === folder.buttons[j]) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        newCustomOrder.push(customOrder[i]);
+                    }
+                }
+                setCustomOrder(newCustomOrder);
+                
                 item.remove();
                 
                 Lampa.Modal.close();
