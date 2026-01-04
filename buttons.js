@@ -593,7 +593,7 @@
         folder.buttons.forEach(function(btnId) {
             var btn = allButtonsCache.find(function(b) { return getButtonId(b) === btnId; });
             if (btn) {
-                var displayName = btn.find('span').text().trim();
+                var displayName = getButtonDisplayName(btn, allButtonsCache);
                 var iconElement = btn.find('svg').first();
                 var icon = iconElement.length ? iconElement.clone() : $('<svg></svg>');
 
@@ -965,7 +965,6 @@
 
             item.find('.menu-edit-list__delete').on('hover:enter', function() {
                 var folderId = folder.id;
-                var folderButtons = folder.buttons.slice();
                 deleteFolder(folderId);
                 
                 var itemOrder = getItemOrder();
@@ -987,81 +986,7 @@
                 
                 setTimeout(function() {
                     if (currentContainer) {
-                        var targetContainer = currentContainer.find('.full-start-new__buttons');
-                        targetContainer.find('.button--folder[data-folder-id="' + folderId + '"]').remove();
-                        
-                        folderButtons.forEach(function(btnId) {
-                            var originalBtn = allButtonsOriginal.find(function(b) { return getButtonId(b) === btnId; });
-                            if (originalBtn) {
-                                var newBtn = originalBtn.clone(true, true);
-                                
-                                var insertPosition = -1;
-                                var btnType = getButtonType(newBtn);
-                                
-                                if (btnId === 'modss_online_button' || btnId === 'showy_online_button') {
-                                    insertPosition = 0;
-                                    if (btnId === 'showy_online_button') {
-                                        var modsBtn = targetContainer.find('.full-start__button').filter(function() {
-                                            return getButtonId($(this)) === 'modss_online_button';
-                                        });
-                                        if (modsBtn.length) {
-                                            insertPosition = targetContainer.find('.full-start__button').index(modsBtn) + 1;
-                                        }
-                                    }
-                                } else {
-                                    var existingButtons = targetContainer.find('.full-start__button').not('.button--edit-order, .button--folder');
-                                    var inserted = false;
-                                    
-                                    existingButtons.each(function(index) {
-                                        var existingBtn = $(this);
-                                        var existingType = getButtonType(existingBtn);
-                                        var existingId = getButtonId(existingBtn);
-                                        
-                                        if (existingId === 'modss_online_button' || existingId === 'showy_online_button') {
-                                            return true;
-                                        }
-                                        
-                                        var typeOrder = ['online', 'torrent', 'trailer', 'book', 'reaction', 'other'];
-                                        var newTypeIndex = typeOrder.indexOf(btnType);
-                                        var existingTypeIndex = typeOrder.indexOf(existingType);
-                                        
-                                        if (newTypeIndex < existingTypeIndex) {
-                                            insertPosition = index;
-                                            inserted = true;
-                                            return false;
-                                        }
-                                    });
-                                    
-                                    if (!inserted) {
-                                        insertPosition = existingButtons.length;
-                                    }
-                                }
-                                
-                                if (insertPosition === 0) {
-                                    targetContainer.prepend(newBtn);
-                                } else if (insertPosition > 0) {
-                                    var buttons = targetContainer.find('.full-start__button').not('.button--edit-order');
-                                    if (insertPosition < buttons.length) {
-                                        newBtn.insertBefore(buttons.eq(insertPosition));
-                                    } else {
-                                        var editBtn = targetContainer.find('.button--edit-order');
-                                        if (editBtn.length) {
-                                            newBtn.insertBefore(editBtn);
-                                        } else {
-                                            targetContainer.append(newBtn);
-                                        }
-                                    }
-                                } else {
-                                    var editBtn = targetContainer.find('.button--edit-order');
-                                    if (editBtn.length) {
-                                        newBtn.insertBefore(editBtn);
-                                    } else {
-                                        targetContainer.append(newBtn);
-                                    }
-                                }
-                            }
-                        });
-                        
+                        currentContainer.find('.button--play, .button--edit-order').remove();
                         currentContainer.data('buttons-processed', false);
                         reorderButtons(currentContainer);
                         refreshController();
@@ -1207,8 +1132,6 @@
         '</div>');
         
         resetBtn.on('hover:enter', function() {
-            var folders = getFolders();
-            
             Lampa.Storage.set('button_custom_order', []);
             Lampa.Storage.set('button_hidden', []);
             Lampa.Storage.set('button_folders', []);
@@ -1218,86 +1141,6 @@
             
             setTimeout(function() {
                 if (currentContainer) {
-                    var targetContainer = currentContainer.find('.full-start-new__buttons');
-                    targetContainer.find('.button--folder').remove();
-                    
-                    var allFolderButtons = [];
-                    folders.forEach(function(folder) {
-                        allFolderButtons = allFolderButtons.concat(folder.buttons);
-                    });
-                    
-                    allFolderButtons.forEach(function(btnId) {
-                        var originalBtn = allButtonsOriginal.find(function(b) { return getButtonId(b) === btnId; });
-                        if (originalBtn) {
-                            var newBtn = originalBtn.clone(true, true);
-                            
-                            var insertPosition = -1;
-                            var btnType = getButtonType(newBtn);
-                            
-                            if (btnId === 'modss_online_button' || btnId === 'showy_online_button') {
-                                insertPosition = 0;
-                                if (btnId === 'showy_online_button') {
-                                    var modsBtn = targetContainer.find('.full-start__button').filter(function() {
-                                        return getButtonId($(this)) === 'modss_online_button';
-                                    });
-                                    if (modsBtn.length) {
-                                        insertPosition = targetContainer.find('.full-start__button').index(modsBtn) + 1;
-                                    }
-                                }
-                            } else {
-                                var existingButtons = targetContainer.find('.full-start__button').not('.button--edit-order, .button--folder');
-                                var inserted = false;
-                                
-                                existingButtons.each(function(index) {
-                                    var existingBtn = $(this);
-                                    var existingType = getButtonType(existingBtn);
-                                    var existingId = getButtonId(existingBtn);
-                                    
-                                    if (existingId === 'modss_online_button' || existingId === 'showy_online_button') {
-                                        return true;
-                                    }
-                                    
-                                    var typeOrder = ['online', 'torrent', 'trailer', 'book', 'reaction', 'other'];
-                                    var newTypeIndex = typeOrder.indexOf(btnType);
-                                    var existingTypeIndex = typeOrder.indexOf(existingType);
-                                    
-                                    if (newTypeIndex < existingTypeIndex) {
-                                        insertPosition = index;
-                                        inserted = true;
-                                        return false;
-                                    }
-                                });
-                                
-                                if (!inserted) {
-                                    insertPosition = existingButtons.length;
-                                }
-                            }
-                            
-                            if (insertPosition === 0) {
-                                targetContainer.prepend(newBtn);
-                            } else if (insertPosition > 0) {
-                                var buttons = targetContainer.find('.full-start__button').not('.button--edit-order');
-                                if (insertPosition < buttons.length) {
-                                    newBtn.insertBefore(buttons.eq(insertPosition));
-                                } else {
-                                    var editBtn = targetContainer.find('.button--edit-order');
-                                    if (editBtn.length) {
-                                        newBtn.insertBefore(editBtn);
-                                    } else {
-                                        targetContainer.append(newBtn);
-                                    }
-                                }
-                            } else {
-                                var editBtn = targetContainer.find('.button--edit-order');
-                                if (editBtn.length) {
-                                    newBtn.insertBefore(editBtn);
-                                } else {
-                                    targetContainer.append(newBtn);
-                                }
-                            }
-                        }
-                    });
-                    
                     currentContainer.find('.button--play, .button--edit-order').remove();
                     currentContainer.data('buttons-processed', false);
                     reorderButtons(currentContainer);
