@@ -197,6 +197,16 @@
         });
         
         if (!customOrder.length) {
+            regular.sort(function(a, b) {
+                var typeOrder = ['online', 'torrent', 'trailer', 'book', 'reaction', 'other'];
+                var typeA = getButtonType(a);
+                var typeB = getButtonType(b);
+                var indexA = typeOrder.indexOf(typeA);
+                var indexB = typeOrder.indexOf(typeB);
+                if (indexA === -1) indexA = 999;
+                if (indexB === -1) indexB = 999;
+                return indexA - indexB;
+            });
             return priority.concat(regular);
         }
 
@@ -965,7 +975,6 @@
 
             item.find('.menu-edit-list__delete').on('hover:enter', function() {
                 var folderId = folder.id;
-                var folderButtons = folder.buttons.slice();
                 
                 deleteFolder(folderId);
                 
@@ -988,11 +997,24 @@
                 
                 setTimeout(function() {
                     if (currentContainer) {
-                        var targetContainer = currentContainer.find('.full-start-new__buttons');
+                        currentContainer.find('.button--play, .button--edit-order, .button--folder').remove();
+                        currentContainer.data('buttons-processed', false);
                         
-                        folderButtons.forEach(function(btnId) {
-                            var originalBtn = allButtonsOriginal.find(function(b) { return getButtonId(b) === btnId; });
-                            if (originalBtn) {
+                        var targetContainer = currentContainer.find('.full-start-new__buttons');
+                        var existingButtons = targetContainer.find('.full-start__button').toArray();
+                        
+                        allButtonsOriginal.forEach(function(originalBtn) {
+                            var btnId = getButtonId(originalBtn);
+                            var exists = false;
+                            
+                            for (var i = 0; i < existingButtons.length; i++) {
+                                if (getButtonId($(existingButtons[i])) === btnId) {
+                                    exists = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (!exists) {
                                 var clonedBtn = originalBtn.clone(true, true);
                                 clonedBtn.css({
                                     'opacity': '1',
@@ -1002,8 +1024,6 @@
                             }
                         });
                         
-                        currentContainer.find('.button--play, .button--edit-order').remove();
-                        currentContainer.data('buttons-processed', false);
                         reorderButtons(currentContainer);
                         refreshController();
                     }
@@ -1159,16 +1179,24 @@
             
             setTimeout(function() {
                 if (currentContainer) {
+                    currentContainer.find('.button--play, .button--edit-order, .button--folder').remove();
+                    currentContainer.data('buttons-processed', false);
+                    
                     var targetContainer = currentContainer.find('.full-start-new__buttons');
+                    var existingButtons = targetContainer.find('.full-start__button').toArray();
                     
-                    var allFolderButtons = [];
-                    folders.forEach(function(folder) {
-                        allFolderButtons = allFolderButtons.concat(folder.buttons);
-                    });
-                    
-                    allFolderButtons.forEach(function(btnId) {
-                        var originalBtn = allButtonsOriginal.find(function(b) { return getButtonId(b) === btnId; });
-                        if (originalBtn) {
+                    allButtonsOriginal.forEach(function(originalBtn) {
+                        var btnId = getButtonId(originalBtn);
+                        var exists = false;
+                        
+                        for (var i = 0; i < existingButtons.length; i++) {
+                            if (getButtonId($(existingButtons[i])) === btnId) {
+                                exists = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!exists) {
                             var clonedBtn = originalBtn.clone(true, true);
                             clonedBtn.css({
                                 'opacity': '1',
@@ -1178,8 +1206,6 @@
                         }
                     });
                     
-                    currentContainer.find('.button--play, .button--edit-order').remove();
-                    currentContainer.data('buttons-processed', false);
                     reorderButtons(currentContainer);
                     refreshController();
                 }
