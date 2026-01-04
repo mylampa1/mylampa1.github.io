@@ -1074,8 +1074,6 @@
                 setCustomOrder(newCustomOrder);
                 
                 item.remove();
-                
-                Lampa.Modal.close();
                 Lampa.Noty.show('Папка удалена');
                 
                 setTimeout(function() {
@@ -1108,7 +1106,6 @@
                         });
                         
                         reorderButtons(currentContainer);
-                        refreshController();
                         
                         setTimeout(function() {
                             var updatedItemOrder = [];
@@ -1130,8 +1127,70 @@
                             });
                             setItemOrder(updatedItemOrder);
                             
-                            openEditDialog();
-                        }, 200);
+                            var categories = categorizeButtons(currentContainer);
+                            var allButtons = []
+                                .concat(categories.online)
+                                .concat(categories.torrent)
+                                .concat(categories.trailer)
+                                .concat(categories.book)
+                                .concat(categories.reaction)
+                                .concat(categories.other);
+                            
+                            allButtons = sortByCustomOrder(allButtons);
+                            allButtonsCache = allButtons;
+                            
+                            var folders = getFolders();
+                            var buttonsInFolders = [];
+                            folders.forEach(function(folder) {
+                                buttonsInFolders = buttonsInFolders.concat(folder.buttons);
+                            });
+                            
+                            var filteredButtons = allButtons.filter(function(btn) {
+                                return buttonsInFolders.indexOf(getButtonId(btn)) === -1;
+                            });
+                            
+                            currentButtons = filteredButtons;
+                            
+                            folderButtons.forEach(function(btnId) {
+                                var btn = allButtons.find(function(b) { return getButtonId(b) === btnId; });
+                                if (btn) {
+                                    var btnItem = createButtonItem(btn);
+                                    
+                                    var inserted = false;
+                                    list.find('.menu-edit-list__item').not('.menu-edit-list__create-folder, .folder-reset-button').each(function() {
+                                        var $existingItem = $(this);
+                                        var existingType = $existingItem.data('itemType');
+                                        
+                                        if (existingType === 'button') {
+                                            var existingBtnId = $existingItem.data('buttonId');
+                                            var existingIndex = updatedItemOrder.findIndex(function(item) {
+                                                return item.type === 'button' && item.id === existingBtnId;
+                                            });
+                                            var newIndex = updatedItemOrder.findIndex(function(item) {
+                                                return item.type === 'button' && item.id === btnId;
+                                            });
+                                            
+                                            if (newIndex !== -1 && existingIndex !== -1 && newIndex < existingIndex) {
+                                                btnItem.insertBefore($existingItem);
+                                                inserted = true;
+                                                return false;
+                                            }
+                                        }
+                                    });
+                                    
+                                    if (!inserted) {
+                                        var resetButton = list.find('.folder-reset-button');
+                                        if (resetButton.length) {
+                                            btnItem.insertBefore(resetButton);
+                                        } else {
+                                            list.append(btnItem);
+                                        }
+                                    }
+                                }
+                            });
+                            
+                            refreshController();
+                        }, 100);
                     }
                 }, 50);
             });
