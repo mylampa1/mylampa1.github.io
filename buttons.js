@@ -83,6 +83,7 @@
     function getButtonId(button) {
         var classes = button.attr('class') || '';
         var text = button.find('span').text().trim().replace(/\s+/g, '_');
+        var subtitle = button.attr('data-subtitle') || '';
         
         if (classes.indexOf('modss') !== -1 || text.indexOf('MODS') !== -1 || text.indexOf('MOD') !== -1) {
             return 'modss_online_button';
@@ -101,6 +102,11 @@
         }
         
         var id = viewClasses + '_' + text;
+        
+        if (subtitle) {
+            id = id + '_' + subtitle.replace(/\s+/g, '_').substring(0, 30);
+        }
+        
         return id;
     }
 
@@ -963,30 +969,16 @@
                 deleteFolder(folderId);
                 
                 var itemOrder = getItemOrder();
+                var newItemOrder = [];
+                
                 for (var i = 0; i < itemOrder.length; i++) {
                     if (itemOrder[i].type === 'folder' && itemOrder[i].id === folderId) {
-                        itemOrder.splice(i, 1);
-                        break;
+                        continue;
                     }
+                    newItemOrder.push(itemOrder[i]);
                 }
                 
-                folderButtons.forEach(function(btnId) {
-                    var found = false;
-                    for (var j = 0; j < itemOrder.length; j++) {
-                        if (itemOrder[j].type === 'button' && itemOrder[j].id === btnId) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found) {
-                        itemOrder.push({
-                            type: 'button',
-                            id: btnId
-                        });
-                    }
-                });
-                
-                setItemOrder(itemOrder);
+                setItemOrder(newItemOrder);
                 
                 item.remove();
                 
@@ -1002,7 +994,71 @@
                             var originalBtn = allButtonsOriginal.find(function(b) { return getButtonId(b) === btnId; });
                             if (originalBtn) {
                                 var newBtn = originalBtn.clone(true, true);
-                                targetContainer.append(newBtn);
+                                
+                                var insertPosition = -1;
+                                var btnType = getButtonType(newBtn);
+                                
+                                if (btnId === 'modss_online_button' || btnId === 'showy_online_button') {
+                                    insertPosition = 0;
+                                    if (btnId === 'showy_online_button') {
+                                        var modsBtn = targetContainer.find('.full-start__button').filter(function() {
+                                            return getButtonId($(this)) === 'modss_online_button';
+                                        });
+                                        if (modsBtn.length) {
+                                            insertPosition = targetContainer.find('.full-start__button').index(modsBtn) + 1;
+                                        }
+                                    }
+                                } else {
+                                    var existingButtons = targetContainer.find('.full-start__button').not('.button--edit-order, .button--folder');
+                                    var inserted = false;
+                                    
+                                    existingButtons.each(function(index) {
+                                        var existingBtn = $(this);
+                                        var existingType = getButtonType(existingBtn);
+                                        var existingId = getButtonId(existingBtn);
+                                        
+                                        if (existingId === 'modss_online_button' || existingId === 'showy_online_button') {
+                                            return true;
+                                        }
+                                        
+                                        var typeOrder = ['online', 'torrent', 'trailer', 'book', 'reaction', 'other'];
+                                        var newTypeIndex = typeOrder.indexOf(btnType);
+                                        var existingTypeIndex = typeOrder.indexOf(existingType);
+                                        
+                                        if (newTypeIndex < existingTypeIndex) {
+                                            insertPosition = index;
+                                            inserted = true;
+                                            return false;
+                                        }
+                                    });
+                                    
+                                    if (!inserted) {
+                                        insertPosition = existingButtons.length;
+                                    }
+                                }
+                                
+                                if (insertPosition === 0) {
+                                    targetContainer.prepend(newBtn);
+                                } else if (insertPosition > 0) {
+                                    var buttons = targetContainer.find('.full-start__button').not('.button--edit-order');
+                                    if (insertPosition < buttons.length) {
+                                        newBtn.insertBefore(buttons.eq(insertPosition));
+                                    } else {
+                                        var editBtn = targetContainer.find('.button--edit-order');
+                                        if (editBtn.length) {
+                                            newBtn.insertBefore(editBtn);
+                                        } else {
+                                            targetContainer.append(newBtn);
+                                        }
+                                    }
+                                } else {
+                                    var editBtn = targetContainer.find('.button--edit-order');
+                                    if (editBtn.length) {
+                                        newBtn.insertBefore(editBtn);
+                                    } else {
+                                        targetContainer.append(newBtn);
+                                    }
+                                }
                             }
                         });
                         
@@ -1165,14 +1221,81 @@
                     var targetContainer = currentContainer.find('.full-start-new__buttons');
                     targetContainer.find('.button--folder').remove();
                     
+                    var allFolderButtons = [];
                     folders.forEach(function(folder) {
-                        folder.buttons.forEach(function(btnId) {
-                            var originalBtn = allButtonsOriginal.find(function(b) { return getButtonId(b) === btnId; });
-                            if (originalBtn) {
-                                var newBtn = originalBtn.clone(true, true);
-                                targetContainer.append(newBtn);
+                        allFolderButtons = allFolderButtons.concat(folder.buttons);
+                    });
+                    
+                    allFolderButtons.forEach(function(btnId) {
+                        var originalBtn = allButtonsOriginal.find(function(b) { return getButtonId(b) === btnId; });
+                        if (originalBtn) {
+                            var newBtn = originalBtn.clone(true, true);
+                            
+                            var insertPosition = -1;
+                            var btnType = getButtonType(newBtn);
+                            
+                            if (btnId === 'modss_online_button' || btnId === 'showy_online_button') {
+                                insertPosition = 0;
+                                if (btnId === 'showy_online_button') {
+                                    var modsBtn = targetContainer.find('.full-start__button').filter(function() {
+                                        return getButtonId($(this)) === 'modss_online_button';
+                                    });
+                                    if (modsBtn.length) {
+                                        insertPosition = targetContainer.find('.full-start__button').index(modsBtn) + 1;
+                                    }
+                                }
+                            } else {
+                                var existingButtons = targetContainer.find('.full-start__button').not('.button--edit-order, .button--folder');
+                                var inserted = false;
+                                
+                                existingButtons.each(function(index) {
+                                    var existingBtn = $(this);
+                                    var existingType = getButtonType(existingBtn);
+                                    var existingId = getButtonId(existingBtn);
+                                    
+                                    if (existingId === 'modss_online_button' || existingId === 'showy_online_button') {
+                                        return true;
+                                    }
+                                    
+                                    var typeOrder = ['online', 'torrent', 'trailer', 'book', 'reaction', 'other'];
+                                    var newTypeIndex = typeOrder.indexOf(btnType);
+                                    var existingTypeIndex = typeOrder.indexOf(existingType);
+                                    
+                                    if (newTypeIndex < existingTypeIndex) {
+                                        insertPosition = index;
+                                        inserted = true;
+                                        return false;
+                                    }
+                                });
+                                
+                                if (!inserted) {
+                                    insertPosition = existingButtons.length;
+                                }
                             }
-                        });
+                            
+                            if (insertPosition === 0) {
+                                targetContainer.prepend(newBtn);
+                            } else if (insertPosition > 0) {
+                                var buttons = targetContainer.find('.full-start__button').not('.button--edit-order');
+                                if (insertPosition < buttons.length) {
+                                    newBtn.insertBefore(buttons.eq(insertPosition));
+                                } else {
+                                    var editBtn = targetContainer.find('.button--edit-order');
+                                    if (editBtn.length) {
+                                        newBtn.insertBefore(editBtn);
+                                    } else {
+                                        targetContainer.append(newBtn);
+                                    }
+                                }
+                            } else {
+                                var editBtn = targetContainer.find('.button--edit-order');
+                                if (editBtn.length) {
+                                    newBtn.insertBefore(editBtn);
+                                } else {
+                                    targetContainer.append(newBtn);
+                                }
+                            }
+                        }
                     });
                     
                     currentContainer.find('.button--play, .button--edit-order').remove();
