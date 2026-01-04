@@ -975,6 +975,7 @@
 
             item.find('.menu-edit-list__delete').on('hover:enter', function() {
                 var folderId = folder.id;
+                var folderButtons = folder.buttons.slice();
                 
                 deleteFolder(folderId);
                 
@@ -985,6 +986,18 @@
                     if (itemOrder[i].type === 'folder' && itemOrder[i].id === folderId) {
                         continue;
                     }
+                    if (itemOrder[i].type === 'button') {
+                        var isInFolder = false;
+                        for (var j = 0; j < folderButtons.length; j++) {
+                            if (itemOrder[i].id === folderButtons[j]) {
+                                isInFolder = true;
+                                break;
+                            }
+                        }
+                        if (isInFolder) {
+                            continue;
+                        }
+                    }
                     newItemOrder.push(itemOrder[i]);
                 }
                 
@@ -994,8 +1007,8 @@
                 var newCustomOrder = [];
                 for (var i = 0; i < customOrder.length; i++) {
                     var found = false;
-                    for (var j = 0; j < folder.buttons.length; j++) {
-                        if (customOrder[i] === folder.buttons[j]) {
+                    for (var j = 0; j < folderButtons.length; j++) {
+                        if (customOrder[i] === folderButtons[j]) {
                             found = true;
                             break;
                         }
