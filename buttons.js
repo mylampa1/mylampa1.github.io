@@ -8,11 +8,13 @@
  * Позволяет изменять порядок кнопок, скрывать/показывать их, группировать в папки.
  * 
  * Возможности:
- * - Изменение порядка кнопок (перемещение влево/вправо)
+ * - Изменение порядка кнопок (перемещение вверх/вниз)
  * - Скрытие/показ кнопок
  * - Создание папок для группировки кнопок
  * - Изменение порядка кнопок внутри папок
  * - Автоматическая группировка по типам (онлайн, торренты, трейлеры и т.д.)
+ * - Анимация появления кнопок
+ * - Сброс настроек к значениям по умолчанию
  * 
  * Установка:
  * 
@@ -81,10 +83,17 @@
 
     function getButtonId(button) {
         var classes = button.attr('class') || '';
-        var text = button.find('span').text().trim();
-        return classes.split(' ').filter(function(c) { 
+        var text = button.find('span').text().trim().replace(/\s+/g, '_');
+        var subtitle = button.attr('data-subtitle') || '';
+        var viewClasses = classes.split(' ').filter(function(c) { 
             return c.indexOf('view--') === 0 || c.indexOf('button--') === 0; 
-        }).join('_') + '_' + text;
+        }).join('_');
+        
+        var id = viewClasses + '_' + text;
+        if (subtitle) {
+            id += '_' + subtitle.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_');
+        }
+        return id;
     }
 
     function getButtonType(button) {
@@ -314,6 +323,7 @@
     function getButtonDisplayName(btn, allButtons) {
         var text = btn.find('span').text().trim();
         var classes = btn.attr('class') || '';
+        var subtitle = btn.attr('data-subtitle') || '';
         
         if (!text) {
             var viewClass = classes.split(' ').find(function(c) { 
@@ -336,6 +346,10 @@
         });
         
         if (sameTextCount > 1) {
+            if (subtitle) {
+                return text + ' <span style="opacity:0.5">(' + subtitle.substring(0, 30) + ')</span>';
+            }
+            
             var viewClass = classes.split(' ').find(function(c) { 
                 return c.indexOf('view--') === 0; 
             });
@@ -357,9 +371,9 @@
             '</svg>';
         
         if (firstBtn) {
-            var btnIcon = firstBtn.find('svg').prop('outerHTML');
-            if (btnIcon) {
-                icon = btnIcon;
+            var btnIcon = firstBtn.find('svg').first();
+            if (btnIcon.length) {
+                icon = btnIcon.prop('outerHTML');
             }
         }
         
@@ -382,7 +396,8 @@
             var btn = allButtonsCache.find(function(b) { return getButtonId(b) === btnId; });
             if (btn) {
                 var text = btn.find('span').text().trim();
-                var icon = btn.find('svg').prop('outerHTML') || '';
+                var iconElement = btn.find('svg').first();
+                var icon = iconElement.length ? iconElement.prop('outerHTML') : '';
                 var subtitle = btn.attr('data-subtitle') || '';
                 
                 var item = {
@@ -432,7 +447,8 @@
             var btn = allButtonsCache.find(function(b) { return getButtonId(b) === btnId; });
             if (btn) {
                 var displayName = btn.find('span').text().trim();
-                var icon = btn.find('svg').clone();
+                var iconElement = btn.find('svg').first();
+                var icon = iconElement.length ? iconElement.clone() : $('<svg></svg>');
 
                 var item = $('<div class="menu-edit-list__item">' +
                     '<div class="menu-edit-list__icon"></div>' +
@@ -513,8 +529,9 @@
             var firstBtn = allButtonsCache.find(function(b) { return getButtonId(b) === firstBtnId; });
             
             if (firstBtn) {
-                var btnIcon = firstBtn.find('svg').clone();
-                if (btnIcon.length) {
+                var iconElement = firstBtn.find('svg').first();
+                if (iconElement.length) {
+                    var btnIcon = iconElement.clone();
                     folderBtn.find('svg').replaceWith(btnIcon);
                 }
             }
@@ -574,7 +591,8 @@
             }
             
             var displayName = getButtonDisplayName(btn, allButtonsCache);
-            var icon = btn.find('svg').clone();
+            var iconElement = btn.find('svg').first();
+            var icon = iconElement.length ? iconElement.clone() : $('<svg></svg>');
 
             var item = $('<div class="menu-edit-list__item">' +
                 '<div class="menu-edit-list__icon"></div>' +
@@ -1131,6 +1149,11 @@
             '.full-start__button { opacity: 0; }' +
             '.full-start__button.hidden { display: none !important; }' +
             '.button--folder { cursor: pointer; }' +
+            '.full-start-new__buttons { overflow-x: auto !important; overflow-y: hidden !important; flex-wrap: nowrap !important; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.3) transparent; }' +
+            '.full-start-new__buttons::-webkit-scrollbar { height: 6px; }' +
+            '.full-start-new__buttons::-webkit-scrollbar-track { background: transparent; }' +
+            '.full-start-new__buttons::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }' +
+            '.full-start-new__buttons::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.5); }' +
             '.menu-edit-list__create-folder { background: rgba(100,200,100,0.2); }' +
             '.menu-edit-list__create-folder.focus { background: rgba(100,200,100,0.3); border: 3px solid rgba(255,255,255,0.8); }' +
             '.menu-edit-list__delete { width: 2.4em; height: 2.4em; display: flex; align-items: center; justify-content: center; cursor: pointer; }' +
