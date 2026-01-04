@@ -1,6 +1,6 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.3.2
+ * Версия: 1.3.3
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -1052,9 +1052,16 @@
                 setItemOrder(itemOrder);
                 
                 item.remove();
-                applyChanges();
                 
                 Lampa.Noty.show('Папка удалена');
+                
+                setTimeout(function() {
+                    if (currentContainer) {
+                        currentContainer.data('buttons-processed', false);
+                        reorderButtons(currentContainer);
+                        refreshController();
+                    }
+                }, 50);
             });
             
             return item;
@@ -1195,19 +1202,6 @@
         '</div>');
         
         resetBtn.on('hover:enter', function() {
-            var folders = getFolders();
-            var targetContainer = currentContainer.find('.full-start-new__buttons');
-            
-            folders.forEach(function(folder) {
-                folder.buttons.forEach(function(btnId) {
-                    var btn = allButtonsCache.find(function(b) { return getButtonId(b) === btnId; });
-                    if (btn) {
-                        btn.removeClass('hidden');
-                        targetContainer.append(btn);
-                    }
-                });
-            });
-            
             Lampa.Storage.set('button_custom_order', []);
             Lampa.Storage.set('button_hidden', []);
             Lampa.Storage.set('button_folders', []);
@@ -1234,8 +1228,13 @@
             scroll_to_center: true,
             onBack: function() {
                 Lampa.Modal.close();
-                applyChanges();
-                Lampa.Controller.toggle('full_start');
+                setTimeout(function() {
+                    if (currentContainer) {
+                        currentContainer.data('buttons-processed', false);
+                        reorderButtons(currentContainer);
+                        refreshController();
+                    }
+                }, 50);
             }
         });
     }
