@@ -1,6 +1,6 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.4.0
+ * Версия: 1.0.0
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -47,6 +47,25 @@
     var allButtonsCache = [];
     var allButtonsOriginal = [];
     var currentContainer = null;
+
+    // Вспомогательная функция для поиска кнопки
+    function findButton(btnId) {
+        var btn = allButtonsOriginal.find(function(b) { return getButtonId(b) === btnId; });
+        if (!btn) {
+            btn = allButtonsCache.find(function(b) { return getButtonId(b) === btnId; });
+        }
+        return btn;
+    }
+
+    // Вспомогательная функция для получения всех ID кнопок в папках
+    function getButtonsInFolders() {
+        var folders = getFolders();
+        var buttonsInFolders = [];
+        folders.forEach(function(folder) {
+            buttonsInFolders = buttonsInFolders.concat(folder.buttons);
+        });
+        return buttonsInFolders;
+    }
 
     function getCustomOrder() {
         return Lampa.Storage.get('button_custom_order', []);
@@ -578,10 +597,7 @@
 
     function createFolderButton(folder) {
         var firstBtnId = folder.buttons[0];
-        var firstBtn = allButtonsOriginal.find(function(b) { return getButtonId(b) === firstBtnId; });
-        if (!firstBtn) {
-            firstBtn = allButtonsCache.find(function(b) { return getButtonId(b) === firstBtnId; });
-        }
+        var firstBtn = findButton(firstBtnId);
         var icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
                 '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>' +
             '</svg>';
@@ -609,10 +625,7 @@
         var items = [];
         
         folder.buttons.forEach(function(btnId) {
-            var btn = allButtonsOriginal.find(function(b) { return getButtonId(b) === btnId; });
-            if (!btn) {
-                btn = allButtonsCache.find(function(b) { return getButtonId(b) === btnId; });
-            }
+            var btn = findButton(btnId);
             if (btn) {
                 var text = btn.find('span').text().trim();
                 var iconElement = btn.find('svg').first();
@@ -663,10 +676,7 @@
         var list = $('<div class="menu-edit-list"></div>');
         
         folder.buttons.forEach(function(btnId) {
-            var btn = allButtonsOriginal.find(function(b) { return getButtonId(b) === btnId; });
-            if (!btn) {
-                btn = allButtonsCache.find(function(b) { return getButtonId(b) === btnId; });
-            }
+            var btn = findButton(btnId);
             if (btn) {
                 var displayName = getButtonDisplayName(btn, allButtonsOriginal);
                 var iconElement = btn.find('svg').first();
@@ -750,10 +760,7 @@
         var folderBtn = currentContainer.find('.button--folder[data-folder-id="' + folder.id + '"]');
         if (folderBtn.length) {
             var firstBtnId = folder.buttons[0];
-            var firstBtn = allButtonsOriginal.find(function(b) { return getButtonId(b) === firstBtnId; });
-            if (!firstBtn) {
-                firstBtn = allButtonsCache.find(function(b) { return getButtonId(b) === firstBtnId; });
-            }
+            var firstBtn = findButton(firstBtnId);
             
             if (firstBtn) {
                 var iconElement = firstBtn.find('svg').first();
@@ -809,12 +816,7 @@
         var selectedButtons = [];
         var list = $('<div class="menu-edit-list"></div>');
         
-        var folders = getFolders();
-        var buttonsInFolders = [];
-        folders.forEach(function(folder) {
-            buttonsInFolders = buttonsInFolders.concat(folder.buttons);
-        });
-
+        var buttonsInFolders = getButtonsInFolders();
         var sortedButtons = sortByCustomOrder(allButtonsOriginal.slice());
 
         sortedButtons.forEach(function(btn) {
@@ -1605,10 +1607,6 @@
                 'flex-direction: row !important; ' +
                 'flex-wrap: wrap !important; ' +
                 'gap: 0.5em !important; ' +
-            '}' +
-            '.full-start-new__buttons .full-start__button { ' +
-                'flex: 0 0 calc((100% - 3em) / 7) !important; ' +
-                'max-width: calc((100% - 3em) / 7) !important; ' +
             '}' +
             '.full-start-new__buttons.buttons-loading .full-start__button { visibility: hidden !important; }' +
             '.menu-edit-list__create-folder { background: rgba(100,200,100,0.2); }' +
