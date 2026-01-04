@@ -1,6 +1,6 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.3.3
+ * Версия: 1.3.4
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -957,106 +957,26 @@
             });
 
             item.find('.menu-edit-list__delete').on('hover:enter', function() {
-                var folderButtons = folder.buttons.slice();
                 var folderId = folder.id;
                 deleteFolder(folderId);
                 
-                currentContainer.find('.button--folder[data-folder-id="' + folderId + '"]').remove();
-                
                 var itemOrder = getItemOrder();
-                var folderIndexInOrder = -1;
-                
                 for (var i = 0; i < itemOrder.length; i++) {
                     if (itemOrder[i].type === 'folder' && itemOrder[i].id === folderId) {
-                        folderIndexInOrder = i;
+                        itemOrder.splice(i, 1);
                         break;
                     }
                 }
-                
-                if (folderIndexInOrder !== -1) {
-                    itemOrder.splice(folderIndexInOrder, 1);
-                }
-                
-                var buttonsToAdd = [];
-                folderButtons.forEach(function(btnId) {
-                    var btn = allButtonsCache.find(function(b) { return getButtonId(b) === btnId; });
-                    if (btn) {
-                        buttonsToAdd.push({ id: btnId, button: btn });
-                    }
-                });
-                
-                buttonsToAdd.sort(function(a, b) {
-                    var indexA = allButtonsCache.indexOf(a.button);
-                    var indexB = allButtonsCache.indexOf(b.button);
-                    return indexA - indexB;
-                });
-                
-                var insertPosition = folderIndexInOrder !== -1 ? folderIndexInOrder : itemOrder.length;
-                
-                buttonsToAdd.forEach(function(btnData, index) {
-                    var btn = btnData.button;
-                    var btnId = btnData.id;
-                    
-                    var insertIndex = 0;
-                    var originalIndex = allButtonsCache.indexOf(btn);
-                    
-                    for (var i = 0; i < currentButtons.length; i++) {
-                        var currentIndex = allButtonsCache.indexOf(currentButtons[i]);
-                        if (currentIndex < originalIndex) {
-                            insertIndex = i + 1;
-                        }
-                    }
-                    
-                    currentButtons.splice(insertIndex, 0, btn);
-                    
-                    if (insertPosition + index <= itemOrder.length) {
-                        itemOrder.splice(insertPosition + index, 0, {
-                            type: 'button',
-                            id: btnId
-                        });
-                    } else {
-                        itemOrder.push({
-                            type: 'button',
-                            id: btnId
-                        });
-                    }
-                    
-                    var displayName = getButtonDisplayName(btn, currentButtons);
-                    var iconElement = btn.find('svg').first();
-                    var icon = iconElement.length ? iconElement.clone() : $('<svg></svg>');
-                    var isHidden = hidden.indexOf(btnId) !== -1;
-
-                    var newItem = createButtonItem(btn);
-                    
-                    var allItems = list.find('.menu-edit-list__item').not('.menu-edit-list__create-folder').not('.folder-item');
-                    var insertBeforeItem = null;
-                    
-                    allItems.each(function() {
-                        var existingBtn = $(this).data('button');
-                        if (existingBtn) {
-                            var existingIndex = allButtonsCache.indexOf(existingBtn);
-                            if (existingIndex > originalIndex && !insertBeforeItem) {
-                                insertBeforeItem = $(this);
-                                return false;
-                            }
-                        }
-                    });
-                    
-                    if (insertBeforeItem) {
-                        insertBeforeItem.before(newItem);
-                    } else {
-                        list.find('.folder-reset-button').before(newItem);
-                    }
-                });
-                
                 setItemOrder(itemOrder);
                 
                 item.remove();
                 
+                Lampa.Modal.close();
                 Lampa.Noty.show('Папка удалена');
                 
                 setTimeout(function() {
                     if (currentContainer) {
+                        currentContainer.find('.full-start__button').remove();
                         currentContainer.data('buttons-processed', false);
                         reorderButtons(currentContainer);
                         refreshController();
@@ -1228,13 +1148,7 @@
             scroll_to_center: true,
             onBack: function() {
                 Lampa.Modal.close();
-                setTimeout(function() {
-                    if (currentContainer) {
-                        currentContainer.data('buttons-processed', false);
-                        reorderButtons(currentContainer);
-                        refreshController();
-                    }
-                }, 50);
+                Lampa.Controller.toggle('full_start');
             }
         });
     }
