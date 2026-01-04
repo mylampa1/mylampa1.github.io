@@ -1,6 +1,6 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.2.0
+ * Версия: 1.2.1
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -1280,6 +1280,7 @@
                 'flex-wrap: wrap !important; ' +
                 'gap: 0.5em !important; ' +
             '}' +
+            '.full-start-new__buttons.buttons-loading .full-start__button:not(.button--edit-order) { opacity: 0 !important; transition: opacity 0.2s; }' +
             '.menu-edit-list__create-folder { background: rgba(100,200,100,0.2); }' +
             '.menu-edit-list__create-folder.focus { background: rgba(100,200,100,0.3); border: 3px solid rgba(255,255,255,0.8); }' +
             '.menu-edit-list__delete { width: 2.4em; height: 2.4em; display: flex; align-items: center; justify-content: center; cursor: pointer; }' +
@@ -1297,9 +1298,14 @@
         Lampa.Listener.follow('full', function(e) {
             if (e.type !== 'complite') return;
 
+            var container = e.object.activity.render();
+            var targetContainer = container.find('.full-start-new__buttons');
+            if (targetContainer.length) {
+                targetContainer.addClass('buttons-loading');
+            }
+
             setTimeout(function() {
                 try {
-                    var container = e.object.activity.render();
                     if (!container.data('buttons-processed')) {
                         container.data('buttons-processed', true);
                         if (reorderButtons(container)) {
@@ -1307,32 +1313,17 @@
                         }
                         
                         setTimeout(function() {
-                            try {
-                                var hasNewButtons = false;
-                                var currentButtonIds = [];
-                                allButtonsCache.forEach(function(btn) {
-                                    currentButtonIds.push(getButtonId(btn));
-                                });
-                                
-                                var allCurrentButtons = container.find('.full-start__button').not('.button--edit-order, .button--folder, .button--play');
-                                allCurrentButtons.each(function() {
-                                    var btn = $(this);
-                                    var btnId = getButtonId(btn);
-                                    if (currentButtonIds.indexOf(btnId) === -1) {
-                                        hasNewButtons = true;
-                                    }
-                                });
-                                
-                                if (hasNewButtons) {
-                                    container.data('buttons-processed', false);
-                                    reorderButtons(container);
-                                    refreshController();
-                                }
-                            } catch(err) {}
-                        }, 500);
+                            if (targetContainer.length) {
+                                targetContainer.removeClass('buttons-loading');
+                            }
+                        }, 50);
                     }
-                } catch(err) {}
-            }, 100);
+                } catch(err) {
+                    if (targetContainer.length) {
+                        targetContainer.removeClass('buttons-loading');
+                    }
+                }
+            }, 400);
         });
     }
 
