@@ -1204,10 +1204,10 @@
                             });
                             
                             setTimeout(function() {
-                                Lampa.Controller.toggle('modal');
-                            }, 50);
-                            
-                            refreshController();
+                                try {
+                                    Lampa.Controller.toggle('modal');
+                                } catch(e) {}
+                            }, 100);
                         }, 100);
                     }
                 }, 50);
