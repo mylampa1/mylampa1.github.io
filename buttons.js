@@ -1670,13 +1670,16 @@
                 name: 'Редактор кнопок'
             },
             onChange: function(value) {
-                if (value) {
-                    $('.button--edit-order').show();
-                    Lampa.Noty.show('Редактор кнопок включен');
-                } else {
-                    $('.button--edit-order').hide();
-                    Lampa.Noty.show('Редактор кнопок выключен');
-                }
+                setTimeout(function() {
+                    var currentValue = Lampa.Storage.get('buttons_editor_enabled', true);
+                    if (currentValue) {
+                        $('.button--edit-order').show();
+                        Lampa.Noty.show('Редактор кнопок включен');
+                    } else {
+                        $('.button--edit-order').hide();
+                        Lampa.Noty.show('Редактор кнопок выключен');
+                    }
+                }, 100);
             },
             onRender: function(element) {
                 setTimeout(function() {
