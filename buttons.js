@@ -1,6 +1,6 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.0.0
+ * Версия: 1.0.1
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -1597,6 +1597,11 @@
     }
 
     function init() {
+        // Проверяем включен ли редактор кнопок
+        if (Lampa.Storage.get('buttons_editor_enabled') === false) {
+            return;
+        }
+
         var style = $('<style>' +
             '@keyframes button-fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }' +
             '.full-start__button { opacity: 0; }' +
@@ -1649,6 +1654,36 @@
                     }
                 }
             }, 400);
+        });
+    }
+
+    // Добавляем настройку в раздел "Интерфейс"
+    if (Lampa.SettingsApi) {
+        Lampa.SettingsApi.addParam({
+            component: 'interface',
+            param: {
+                name: 'buttons_editor_enabled',
+                type: 'trigger',
+                default: true
+            },
+            field: {
+                name: 'Редактор кнопок'
+            },
+            onChange: function(value) {
+                if (value) {
+                    Lampa.Noty.show('Редактор кнопок включен');
+                } else {
+                    Lampa.Noty.show('Редактор кнопок выключен. Перезагрузите страницу.');
+                }
+            },
+            onRender: function(element) {
+                setTimeout(function() {
+                    var lastElement = $('div[data-component="interface"] .settings-param').last();
+                    if (lastElement.length) {
+                        element.insertAfter(lastElement);
+                    }
+                }, 0);
+            }
         });
     }
 
