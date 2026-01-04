@@ -1606,6 +1606,10 @@
                 'flex-wrap: wrap !important; ' +
                 'gap: 0.5em !important; ' +
             '}' +
+            '.full-start-new__buttons .full-start__button { ' +
+                'flex: 0 0 calc((100% - 3em) / 7) !important; ' +
+                'max-width: calc((100% - 3em) / 7) !important; ' +
+            '}' +
             '.full-start-new__buttons.buttons-loading .full-start__button { visibility: hidden !important; }' +
             '.menu-edit-list__create-folder { background: rgba(100,200,100,0.2); }' +
             '.menu-edit-list__create-folder.focus { background: rgba(100,200,100,0.3); border: 3px solid rgba(255,255,255,0.8); }' +
