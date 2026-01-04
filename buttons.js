@@ -1,6 +1,6 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.3.1
+ * Версия: 1.3.2
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -635,7 +635,7 @@
             scroll_to_center: true,
             onBack: function() {
                 Lampa.Modal.close();
-                applyChanges();
+                updateFolderIcon(folder);
                 openFolderMenu(folder);
             }
         });
