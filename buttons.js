@@ -815,14 +815,16 @@
             buttonsInFolders = buttonsInFolders.concat(folder.buttons);
         });
 
-        allButtonsOriginal.forEach(function(btn) {
+        var sortedButtons = sortByCustomOrder(allButtonsOriginal.slice());
+
+        sortedButtons.forEach(function(btn) {
             var btnId = getButtonId(btn);
             
             if (buttonsInFolders.indexOf(btnId) !== -1) {
                 return;
             }
             
-            var displayName = getButtonDisplayName(btn, allButtonsOriginal);
+            var displayName = getButtonDisplayName(btn, sortedButtons);
             var iconElement = btn.find('svg').first();
             var icon = iconElement.length ? iconElement.clone() : $('<svg></svg>');
 
@@ -1200,6 +1202,10 @@
                                     }
                                 }
                             });
+                            
+                            setTimeout(function() {
+                                Lampa.Controller.toggle('modal');
+                            }, 50);
                             
                             refreshController();
                         }, 100);
