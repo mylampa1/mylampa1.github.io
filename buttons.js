@@ -1111,6 +1111,25 @@
                         refreshController();
                         
                         setTimeout(function() {
+                            var updatedItemOrder = [];
+                            targetContainer.find('.full-start__button').not('.button--edit-order').each(function() {
+                                var $btn = $(this);
+                                if ($btn.hasClass('button--folder')) {
+                                    var fId = $btn.attr('data-folder-id');
+                                    updatedItemOrder.push({
+                                        type: 'folder',
+                                        id: fId
+                                    });
+                                } else {
+                                    var btnId = getButtonId($btn);
+                                    updatedItemOrder.push({
+                                        type: 'button',
+                                        id: btnId
+                                    });
+                                }
+                            });
+                            setItemOrder(updatedItemOrder);
+                            
                             openEditDialog();
                         }, 200);
                     }
