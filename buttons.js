@@ -1,6 +1,6 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.3.0
+ * Версия: 1.3.1
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -295,31 +295,49 @@
         
         folders.forEach(function(folder) {
             var updatedButtons = [];
+            var usedButtons = [];
+            
             folder.buttons.forEach(function(oldBtnId) {
                 var found = false;
-                allButtons.forEach(function(btn) {
+                
+                for (var i = 0; i < allButtons.length; i++) {
+                    var btn = allButtons[i];
                     var newBtnId = getButtonId(btn);
+                    
+                    if (usedButtons.indexOf(newBtnId) !== -1) continue;
+                    
                     if (newBtnId === oldBtnId) {
                         updatedButtons.push(newBtnId);
+                        usedButtons.push(newBtnId);
                         found = true;
+                        break;
                     }
-                });
+                }
                 
                 if (!found) {
-                    allButtons.forEach(function(btn) {
+                    for (var i = 0; i < allButtons.length; i++) {
+                        var btn = allButtons[i];
+                        var newBtnId = getButtonId(btn);
+                        
+                        if (usedButtons.indexOf(newBtnId) !== -1) continue;
+                        
                         var text = btn.find('span').text().trim();
                         var classes = btn.attr('class') || '';
                         
                         if ((oldBtnId.indexOf('modss') !== -1 || oldBtnId.indexOf('MODS') !== -1) &&
                             (classes.indexOf('modss') !== -1 || text.indexOf('MODS') !== -1)) {
-                            updatedButtons.push(getButtonId(btn));
+                            updatedButtons.push(newBtnId);
+                            usedButtons.push(newBtnId);
                             found = true;
+                            break;
                         } else if ((oldBtnId.indexOf('showy') !== -1 || oldBtnId.indexOf('Showy') !== -1) &&
                                    (classes.indexOf('showy') !== -1 || text.indexOf('Showy') !== -1)) {
-                            updatedButtons.push(getButtonId(btn));
+                            updatedButtons.push(newBtnId);
+                            usedButtons.push(newBtnId);
                             found = true;
+                            break;
                         }
-                    });
+                    }
                 }
                 
                 if (!found) {
@@ -1327,69 +1345,13 @@
     }
 
     function setupButtonNavigation(container) {
-        var targetContainer = container.find('.full-start-new__buttons');
-        if (!targetContainer.length) return;
-        
-        var buttons = targetContainer.find('.full-start__button').not('.hidden');
-        if (buttons.length === 0) return;
-        
-        var rows = [];
-        var currentRow = [];
-        var lastTop = -1;
-        
-        buttons.each(function() {
-            var $btn = $(this);
-            var offset = $btn.offset();
-            if (!offset) return;
-            
-            var top = Math.round(offset.top);
-            
-            if (lastTop === -1) {
-                lastTop = top;
-            }
-            
-            if (Math.abs(top - lastTop) > 10) {
-                if (currentRow.length > 0) {
-                    rows.push(currentRow);
-                }
-                currentRow = [$btn];
-                lastTop = top;
-            } else {
-                currentRow.push($btn);
-            }
-        });
-        
-        if (currentRow.length > 0) {
-            rows.push(currentRow);
+        // Lampa автоматически обрабатывает навигацию для flex-wrap: wrap
+        // Просто убедимся что контроллер обновлен
+        if (Lampa.Controller && typeof Lampa.Controller.toggle === 'function') {
+            try {
+                Lampa.Controller.toggle('full_start');
+            } catch(e) {}
         }
-        
-        if (rows.length < 2) return;
-        
-        rows.forEach(function(row, rowIndex) {
-            row.forEach(function($btn, colIndex) {
-                $btn.off('down up');
-                
-                if (rowIndex < rows.length - 1) {
-                    $btn.on('down', function() {
-                        var nextRow = rows[rowIndex + 1];
-                        var targetBtn = nextRow[Math.min(colIndex, nextRow.length - 1)];
-                        if (targetBtn) {
-                            Lampa.Controller.collectionFocus(targetBtn, targetContainer);
-                        }
-                    });
-                }
-                
-                if (rowIndex > 0) {
-                    $btn.on('up', function() {
-                        var prevRow = rows[rowIndex - 1];
-                        var targetBtn = prevRow[Math.min(colIndex, prevRow.length - 1)];
-                        if (targetBtn) {
-                            Lampa.Controller.collectionFocus(targetBtn, targetContainer);
-                        }
-                    });
-                }
-            });
-        });
     }
 
     function refreshController() {
