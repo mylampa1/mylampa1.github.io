@@ -1,6 +1,6 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.1.1
+ * Версия: 1.1.2
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -8,13 +8,11 @@
  * Позволяет изменять порядок кнопок, скрывать/показывать их, группировать в папки.
  * 
  * Возможности:
- * - Изменение порядка кнопок (перемещение вверх/вниз)
+ * - Изменение порядка кнопок (перемещение влево/вправо)
  * - Скрытие/показ кнопок
  * - Создание папок для группировки кнопок
  * - Изменение порядка кнопок внутри папок
  * - Автоматическая группировка по типам (онлайн, торренты, трейлеры и т.д.)
- * - Анимация появления кнопок
- * - Сброс настроек к значениям по умолчанию
  * 
  * Установка:
  * 
@@ -84,15 +82,15 @@
     function getButtonId(button) {
         var classes = button.attr('class') || '';
         var text = button.find('span').text().trim().replace(/\s+/g, '_');
-        var subtitle = button.attr('data-subtitle') || '';
         var viewClasses = classes.split(' ').filter(function(c) { 
             return c.indexOf('view--') === 0 || c.indexOf('button--') === 0; 
         }).join('_');
         
-        var id = viewClasses + '_' + text;
-        if (subtitle) {
-            id += '_' + subtitle.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_');
+        if (!viewClasses && !text) {
+            return 'button_' + Math.random().toString(36).substr(2, 9);
         }
+        
+        var id = viewClasses + '_' + text;
         return id;
     }
 
@@ -849,6 +847,20 @@
                 
                 currentContainer.find('.button--folder[data-folder-id="' + folderId + '"]').remove();
                 
+                var itemOrder = getItemOrder();
+                var folderIndexInOrder = -1;
+                
+                for (var i = 0; i < itemOrder.length; i++) {
+                    if (itemOrder[i].type === 'folder' && itemOrder[i].id === folderId) {
+                        folderIndexInOrder = i;
+                        break;
+                    }
+                }
+                
+                if (folderIndexInOrder !== -1) {
+                    itemOrder.splice(folderIndexInOrder, 1);
+                }
+                
                 var buttonsToAdd = [];
                 folderButtons.forEach(function(btnId) {
                     var btn = allButtonsCache.find(function(b) { return getButtonId(b) === btnId; });
@@ -863,7 +875,9 @@
                     return indexA - indexB;
                 });
                 
-                buttonsToAdd.forEach(function(btnData) {
+                var insertPosition = folderIndexInOrder !== -1 ? folderIndexInOrder : itemOrder.length;
+                
+                buttonsToAdd.forEach(function(btnData, index) {
                     var btn = btnData.button;
                     var btnId = btnData.id;
                     
@@ -879,8 +893,21 @@
                     
                     currentButtons.splice(insertIndex, 0, btn);
                     
+                    if (insertPosition + index <= itemOrder.length) {
+                        itemOrder.splice(insertPosition + index, 0, {
+                            type: 'button',
+                            id: btnId
+                        });
+                    } else {
+                        itemOrder.push({
+                            type: 'button',
+                            id: btnId
+                        });
+                    }
+                    
                     var displayName = getButtonDisplayName(btn, currentButtons);
-                    var icon = btn.find('svg').clone();
+                    var iconElement = btn.find('svg').first();
+                    var icon = iconElement.length ? iconElement.clone() : $('<svg></svg>');
                     var isHidden = hidden.indexOf(btnId) !== -1;
 
                     var newItem = createButtonItem(btn);
@@ -905,6 +932,8 @@
                         list.find('.folder-reset-button').before(newItem);
                     }
                 });
+                
+                setItemOrder(itemOrder);
                 
                 item.remove();
                 applyChanges();
