@@ -1,6 +1,6 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.3.4
+ * Версия: 1.4.0
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -45,6 +45,7 @@
 
     var currentButtons = [];
     var allButtonsCache = [];
+    var allButtonsOriginal = [];
     var currentContainer = null;
 
     function getCustomOrder() {
@@ -958,6 +959,7 @@
 
             item.find('.menu-edit-list__delete').on('hover:enter', function() {
                 var folderId = folder.id;
+                var folderButtons = folder.buttons.slice();
                 deleteFolder(folderId);
                 
                 var itemOrder = getItemOrder();
@@ -967,6 +969,23 @@
                         break;
                     }
                 }
+                
+                folderButtons.forEach(function(btnId) {
+                    var found = false;
+                    for (var j = 0; j < itemOrder.length; j++) {
+                        if (itemOrder[j].type === 'button' && itemOrder[j].id === btnId) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        itemOrder.push({
+                            type: 'button',
+                            id: btnId
+                        });
+                    }
+                });
+                
                 setItemOrder(itemOrder);
                 
                 item.remove();
@@ -976,7 +995,17 @@
                 
                 setTimeout(function() {
                     if (currentContainer) {
-                        currentContainer.find('.full-start__button').remove();
+                        var targetContainer = currentContainer.find('.full-start-new__buttons');
+                        targetContainer.find('.button--folder[data-folder-id="' + folderId + '"]').remove();
+                        
+                        folderButtons.forEach(function(btnId) {
+                            var originalBtn = allButtonsOriginal.find(function(b) { return getButtonId(b) === btnId; });
+                            if (originalBtn) {
+                                var newBtn = originalBtn.clone(true, true);
+                                targetContainer.append(newBtn);
+                            }
+                        });
+                        
                         currentContainer.data('buttons-processed', false);
                         reorderButtons(currentContainer);
                         refreshController();
@@ -1122,6 +1151,8 @@
         '</div>');
         
         resetBtn.on('hover:enter', function() {
+            var folders = getFolders();
+            
             Lampa.Storage.set('button_custom_order', []);
             Lampa.Storage.set('button_hidden', []);
             Lampa.Storage.set('button_folders', []);
@@ -1131,7 +1162,20 @@
             
             setTimeout(function() {
                 if (currentContainer) {
-                    currentContainer.find('.button--play, .button--edit-order, .button--folder').remove();
+                    var targetContainer = currentContainer.find('.full-start-new__buttons');
+                    targetContainer.find('.button--folder').remove();
+                    
+                    folders.forEach(function(folder) {
+                        folder.buttons.forEach(function(btnId) {
+                            var originalBtn = allButtonsOriginal.find(function(b) { return getButtonId(b) === btnId; });
+                            if (originalBtn) {
+                                var newBtn = originalBtn.clone(true, true);
+                                targetContainer.append(newBtn);
+                            }
+                        });
+                    });
+                    
+                    currentContainer.find('.button--play, .button--edit-order').remove();
                     currentContainer.data('buttons-processed', false);
                     reorderButtons(currentContainer);
                     refreshController();
@@ -1172,6 +1216,12 @@
 
         allButtons = sortByCustomOrder(allButtons);
         allButtonsCache = allButtons;
+        
+        if (allButtonsOriginal.length === 0) {
+            allButtons.forEach(function(btn) {
+                allButtonsOriginal.push(btn.clone(true, true));
+            });
+        }
 
         var folders = getFolders();
         var buttonsInFolders = [];
