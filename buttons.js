@@ -1,6 +1,6 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.0.2
+ * Версия: 1.1.0
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -38,7 +38,7 @@
     var EXCLUDED_CLASSES = ['button--play', 'button--edit-order', 'button--folder'];
     
     var DEFAULT_GROUPS = [
-        { name: 'online', patterns: ['online', 'lampac'], label: 'Онлайн' },
+        { name: 'online', patterns: ['online', 'lampac', 'modss', 'showy'], label: 'Онлайн' },
         { name: 'torrent', patterns: ['torrent'], label: 'Торренты' },
         { name: 'trailer', patterns: ['trailer', 'rutube'], label: 'Трейлеры' },
         { name: 'book', patterns: ['book'], label: 'Закладки' },
@@ -122,7 +122,7 @@
     }
 
     function categorizeButtons(container) {
-        var allButtons = container.find('.full-start__button');
+        var allButtons = container.find('.full-start__button').not('.button--edit-order, .button--folder, .button--play');
         
         var categories = {
             online: [],
@@ -140,8 +140,11 @@
 
             var type = getButtonType($btn);
             
-            if (type === 'online' && $btn.hasClass('lampac--button')) {
-                $btn.find('svg').replaceWith(LAMPAC_ICON);
+            if (type === 'online' && $btn.hasClass('lampac--button') && !$btn.hasClass('modss--button') && !$btn.hasClass('showy--button')) {
+                var svgElement = $btn.find('svg').first();
+                if (svgElement.length && !svgElement.hasClass('modss-online-icon')) {
+                    svgElement.replaceWith(LAMPAC_ICON);
+                }
             }
             
             if (categories[type]) {
@@ -187,19 +190,8 @@
     }
 
     function applyButtonAnimation(buttons) {
-        buttons.forEach(function(btn, index) {
-            btn.css({
-                'animation': '',
-                'animation-delay': ''
-            });
-            
-            setTimeout(function() {
-                btn.css({
-                    'opacity': '1',
-                    'animation': 'button-fade-in 0.4s ease forwards',
-                    'animation-delay': (index * 0.08) + 's'
-                });
-            }, 10);
+        buttons.forEach(function(btn) {
+            btn.css('opacity', '1');
         });
     }
 
@@ -1166,26 +1158,15 @@
     function init() {
         var style = $('<style>' +
             '@keyframes button-fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }' +
-            '.full-start__button { opacity: 0; }' +
-            '.full-start__button[style*="animation"] { opacity: 1; }' +
+            '.full-start__button { opacity: 1 !important; }' +
             '.full-start__button.hidden { display: none !important; }' +
             '.button--folder { cursor: pointer; }' +
             '.full-start-new__buttons { ' +
                 'display: flex !important; ' +
                 'flex-direction: row !important; ' +
-                'flex-wrap: nowrap !important; ' +
-                'overflow-x: auto !important; ' +
-                'overflow-y: hidden !important; ' +
-                '-webkit-overflow-scrolling: touch !important; ' +
-                'scrollbar-width: thin !important; ' +
-                'scrollbar-color: rgba(255,255,255,0.4) rgba(0,0,0,0.2) !important; ' +
-                'max-width: 100% !important; ' +
+                'flex-wrap: wrap !important; ' +
+                'gap: 0.5em !important; ' +
             '}' +
-            '.full-start-new__buttons::-webkit-scrollbar { height: 10px !important; }' +
-            '.full-start-new__buttons::-webkit-scrollbar-track { background: rgba(0,0,0,0.3) !important; border-radius: 5px !important; }' +
-            '.full-start-new__buttons::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.5) !important; border-radius: 5px !important; }' +
-            '.full-start-new__buttons::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.7) !important; }' +
-            '.full-start-new__buttons .full-start__button { flex-shrink: 0 !important; min-width: fit-content !important; }' +
             '.menu-edit-list__create-folder { background: rgba(100,200,100,0.2); }' +
             '.menu-edit-list__create-folder.focus { background: rgba(100,200,100,0.3); border: 3px solid rgba(255,255,255,0.8); }' +
             '.menu-edit-list__delete { width: 2.4em; height: 2.4em; display: flex; align-items: center; justify-content: center; cursor: pointer; }' +
