@@ -1,6 +1,6 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.1.2
+ * Версия: 1.2.0
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -82,12 +82,21 @@
     function getButtonId(button) {
         var classes = button.attr('class') || '';
         var text = button.find('span').text().trim().replace(/\s+/g, '_');
+        
+        if (classes.indexOf('modss') !== -1 || text.indexOf('MODS') !== -1 || text.indexOf('MOD') !== -1) {
+            return 'modss_online_button';
+        }
+        
+        if (classes.indexOf('showy') !== -1 || text.indexOf('Showy') !== -1) {
+            return 'showy_online_button';
+        }
+        
         var viewClasses = classes.split(' ').filter(function(c) { 
             return c.indexOf('view--') === 0 || c.indexOf('button--') === 0; 
         }).join('_');
         
         if (!viewClasses && !text) {
-            return 'button_' + Math.random().toString(36).substr(2, 9);
+            return 'button_unknown';
         }
         
         var id = viewClasses + '_' + text;
@@ -157,10 +166,35 @@
 
     function sortByCustomOrder(buttons) {
         var customOrder = getCustomOrder();
-        if (!customOrder.length) return buttons;
+        
+        var priority = [];
+        var regular = [];
+        
+        buttons.forEach(function(btn) {
+            var id = getButtonId(btn);
+            if (id === 'modss_online_button' || id === 'showy_online_button') {
+                priority.push(btn);
+            } else {
+                regular.push(btn);
+            }
+        });
+        
+        priority.sort(function(a, b) {
+            var idA = getButtonId(a);
+            var idB = getButtonId(b);
+            if (idA === 'modss_online_button') return -1;
+            if (idB === 'modss_online_button') return 1;
+            if (idA === 'showy_online_button') return -1;
+            if (idB === 'showy_online_button') return 1;
+            return 0;
+        });
+        
+        if (!customOrder.length) {
+            return priority.concat(regular);
+        }
 
         var sorted = [];
-        var remaining = buttons.slice();
+        var remaining = regular.slice();
 
         customOrder.forEach(function(id) {
             for (var i = 0; i < remaining.length; i++) {
@@ -172,7 +206,7 @@
             }
         });
 
-        return sorted.concat(remaining);
+        return priority.concat(sorted).concat(remaining);
     }
 
     function applyHiddenButtons(buttons) {
@@ -1271,6 +1305,31 @@
                         if (reorderButtons(container)) {
                             refreshController();
                         }
+                        
+                        setTimeout(function() {
+                            try {
+                                var hasNewButtons = false;
+                                var currentButtonIds = [];
+                                allButtonsCache.forEach(function(btn) {
+                                    currentButtonIds.push(getButtonId(btn));
+                                });
+                                
+                                var allCurrentButtons = container.find('.full-start__button').not('.button--edit-order, .button--folder, .button--play');
+                                allCurrentButtons.each(function() {
+                                    var btn = $(this);
+                                    var btnId = getButtonId(btn);
+                                    if (currentButtonIds.indexOf(btnId) === -1) {
+                                        hasNewButtons = true;
+                                    }
+                                });
+                                
+                                if (hasNewButtons) {
+                                    container.data('buttons-processed', false);
+                                    reorderButtons(container);
+                                    refreshController();
+                                }
+                            } catch(err) {}
+                        }, 500);
                     }
                 } catch(err) {}
             }, 100);
