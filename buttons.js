@@ -1,6 +1,6 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.2.1
+ * Версия: 1.2.2
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -222,8 +222,12 @@
     }
 
     function applyButtonAnimation(buttons) {
-        buttons.forEach(function(btn) {
-            btn.css('opacity', '1');
+        buttons.forEach(function(btn, index) {
+            btn.css({
+                'opacity': '0',
+                'animation': 'button-fade-in 0.4s ease forwards',
+                'animation-delay': (index * 0.08) + 's'
+            });
         });
     }
 
@@ -1271,7 +1275,7 @@
     function init() {
         var style = $('<style>' +
             '@keyframes button-fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }' +
-            '.full-start__button { opacity: 1 !important; }' +
+            '.full-start__button { opacity: 0; }' +
             '.full-start__button.hidden { display: none !important; }' +
             '.button--folder { cursor: pointer; }' +
             '.full-start-new__buttons { ' +
@@ -1280,7 +1284,7 @@
                 'flex-wrap: wrap !important; ' +
                 'gap: 0.5em !important; ' +
             '}' +
-            '.full-start-new__buttons.buttons-loading .full-start__button:not(.button--edit-order) { opacity: 0 !important; transition: opacity 0.2s; }' +
+            '.full-start-new__buttons.buttons-loading .full-start__button { visibility: hidden !important; }' +
             '.menu-edit-list__create-folder { background: rgba(100,200,100,0.2); }' +
             '.menu-edit-list__create-folder.focus { background: rgba(100,200,100,0.3); border: 3px solid rgba(255,255,255,0.8); }' +
             '.menu-edit-list__delete { width: 2.4em; height: 2.4em; display: flex; align-items: center; justify-content: center; cursor: pointer; }' +
@@ -1309,14 +1313,11 @@
                     if (!container.data('buttons-processed')) {
                         container.data('buttons-processed', true);
                         if (reorderButtons(container)) {
-                            refreshController();
-                        }
-                        
-                        setTimeout(function() {
                             if (targetContainer.length) {
                                 targetContainer.removeClass('buttons-loading');
                             }
-                        }, 50);
+                            refreshController();
+                        }
                     }
                 } catch(err) {
                     if (targetContainer.length) {
