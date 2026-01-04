@@ -1,6 +1,6 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.0.1
+ * Версия: 1.0.2
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -275,6 +275,11 @@
         btn.on('hover:enter', function() {
             openEditDialog();
         });
+
+        // Проверяем настройку и скрываем кнопку если редактор выключен
+        if (Lampa.Storage.get('buttons_editor_enabled') === false) {
+            btn.hide();
+        }
 
         return btn;
     }
@@ -627,13 +632,13 @@
         folder.buttons.forEach(function(btnId) {
             var btn = findButton(btnId);
             if (btn) {
-                var text = btn.find('span').text().trim();
+                var displayName = getButtonDisplayName(btn, allButtonsOriginal);
                 var iconElement = btn.find('svg').first();
                 var icon = iconElement.length ? iconElement.prop('outerHTML') : '';
                 var subtitle = btn.attr('data-subtitle') || '';
                 
                 var item = {
-                    title: text || 'Кнопка',
+                    title: displayName.replace(/<[^>]*>/g, ''),
                     button: btn,
                     btnId: btnId
                 };
@@ -1597,11 +1602,6 @@
     }
 
     function init() {
-        // Проверяем включен ли редактор кнопок
-        if (Lampa.Storage.get('buttons_editor_enabled') === false) {
-            return;
-        }
-
         var style = $('<style>' +
             '@keyframes button-fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }' +
             '.full-start__button { opacity: 0; }' +
@@ -1671,9 +1671,11 @@
             },
             onChange: function(value) {
                 if (value) {
+                    $('.button--edit-order').show();
                     Lampa.Noty.show('Редактор кнопок включен');
                 } else {
-                    Lampa.Noty.show('Редактор кнопок выключен. Перезагрузите страницу.');
+                    $('.button--edit-order').hide();
+                    Lampa.Noty.show('Редактор кнопок выключен');
                 }
             },
             onRender: function(element) {
