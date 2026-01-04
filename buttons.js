@@ -1013,7 +1013,6 @@
                 if (prev.length) {
                     item.insertBefore(prev);
                     saveItemOrder();
-                    applyChanges();
                 }
             });
 
@@ -1025,7 +1024,6 @@
                 if (next.length && !next.hasClass('folder-reset-button')) {
                     item.insertAfter(next);
                     saveItemOrder();
-                    applyChanges();
                 }
             });
 
@@ -1111,6 +1109,10 @@
                         
                         reorderButtons(currentContainer);
                         refreshController();
+                        
+                        setTimeout(function() {
+                            openEditDialog();
+                        }, 200);
                     }
                 }, 50);
             });
@@ -1163,7 +1165,6 @@
                         currentButtons.splice(btnIndex - 1, 0, btn);
                     }
                     saveItemOrder();
-                    applyChanges();
                 }
             });
 
@@ -1180,7 +1181,6 @@
                         currentButtons.splice(btnIndex + 1, 0, btn);
                     }
                     saveItemOrder();
-                    applyChanges();
                 }
             });
 
@@ -1199,7 +1199,6 @@
                 }
                 
                 setHiddenButtons(hidden);
-                applyChanges();
             });
             
             return item;
@@ -1306,6 +1305,7 @@
             scroll_to_center: true,
             onBack: function() {
                 Lampa.Modal.close();
+                applyChanges();
                 Lampa.Controller.toggle('full_start');
             }
         });
