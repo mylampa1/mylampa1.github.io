@@ -1,6 +1,6 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.1.0
+ * Версия: 1.1.1
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -242,15 +242,39 @@
     function applyChanges() {
         if (!currentContainer) return;
         
+        var categories = categorizeButtons(currentContainer);
+        var allButtons = []
+            .concat(categories.online)
+            .concat(categories.torrent)
+            .concat(categories.trailer)
+            .concat(categories.book)
+            .concat(categories.reaction)
+            .concat(categories.other);
+        
+        allButtons = sortByCustomOrder(allButtons);
+        allButtonsCache = allButtons;
+        
+        var folders = getFolders();
+        var buttonsInFolders = [];
+        folders.forEach(function(folder) {
+            buttonsInFolders = buttonsInFolders.concat(folder.buttons);
+        });
+        
+        var filteredButtons = allButtons.filter(function(btn) {
+            return buttonsInFolders.indexOf(getButtonId(btn)) === -1;
+        });
+        
+        currentButtons = filteredButtons;
+        applyHiddenButtons(filteredButtons);
+        
         var targetContainer = currentContainer.find('.full-start-new__buttons');
         if (!targetContainer.length) return;
 
         targetContainer.find('.full-start__button').not('.button--edit-order').detach();
         
-        var folders = getFolders();
         var itemOrder = getItemOrder();
         var visibleButtons = [];
-        
+        var folders = getFolders();
         var buttonsInFolders = [];
         folders.forEach(function(folder) {
             buttonsInFolders = buttonsInFolders.concat(folder.buttons);
@@ -716,6 +740,32 @@
     }
 
     function openEditDialog() {
+        if (currentContainer) {
+            var categories = categorizeButtons(currentContainer);
+            var allButtons = []
+                .concat(categories.online)
+                .concat(categories.torrent)
+                .concat(categories.trailer)
+                .concat(categories.book)
+                .concat(categories.reaction)
+                .concat(categories.other);
+            
+            allButtons = sortByCustomOrder(allButtons);
+            allButtonsCache = allButtons;
+            
+            var folders = getFolders();
+            var buttonsInFolders = [];
+            folders.forEach(function(folder) {
+                buttonsInFolders = buttonsInFolders.concat(folder.buttons);
+            });
+            
+            var filteredButtons = allButtons.filter(function(btn) {
+                return buttonsInFolders.indexOf(getButtonId(btn)) === -1;
+            });
+            
+            currentButtons = filteredButtons;
+        }
+        
         var list = $('<div class="menu-edit-list"></div>');
         var hidden = getHiddenButtons();
         var folders = getFolders();
