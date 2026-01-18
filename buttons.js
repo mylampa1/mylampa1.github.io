@@ -1,18 +1,32 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.0.3
+ * Версия: 1.1.0
  * Автор: @Cheeze_l
  * 
  * Описание:
  * Плагин для управления кнопками на странице фильма/сериала в Lampa.
- * Позволяет изменять порядок кнопок, скрывать/показывать их, группировать в папки.
+ * Позволяет изменять порядок кнопок, скрывать/показывать их, группировать в папки,
+ * а также управлять режимами отображения текста на кнопках.
  * 
  * Возможности:
- * - Изменение порядка кнопок (перемещение влево/вправо)
- * - Скрытие/показ кнопок
+ * - Изменение порядка кнопок (перемещение вверх/вниз)
+ * - Скрытие/показ кнопок (скрытые кнопки отображаются полупрозрачными в редакторе)
+ * - Три режима отображения для каждой кнопки:
+ *   • Режим 1 (Стандартный): иконка видна всегда, текст появляется при наведении
+ *   • Режим 2 (Минимальный): только иконка, текст всегда скрыт
+ *   • Режим 3 (Полный): иконка и текст видны всегда
  * - Создание папок для группировки кнопок
  * - Изменение порядка кнопок внутри папок
- * - Автоматическая группировка по типам (онлайн, торренты, трейлеры и т.д.)
+ * - Автоматическая группировка по типам (Онлайн, Торренты, Трейлеры и т.д.)
+ * - Универсальная работа со всеми типами кнопок (включая кастомные плагины)
+ * - Сброс всех настроек к значениям по умолчанию
+ * 
+ * Технические особенности:
+ * - Полная совместимость с ES5 (работает на старых устройствах)
+ * - Встроенные polyfills для Array методов (forEach, filter, find, some, indexOf)
+ * - Универсальная обработка кнопок любых типов
+ * - Автоматическое определение и нормализация структуры кнопок
+ * - Сохранение настроек в localStorage
  * 
  * Установка:
  * 
@@ -30,6 +44,97 @@
 
 (function() {
     'use strict';
+
+    // Polyfills для совместимости со старыми устройствами
+    if (!Array.prototype.forEach) {
+        Array.prototype.forEach = function(callback, thisArg) {
+            var T, k;
+            if (this == null) throw new TypeError('this is null or not defined');
+            var O = Object(this);
+            var len = O.length >>> 0;
+            if (typeof callback !== 'function') throw new TypeError(callback + ' is not a function');
+            if (arguments.length > 1) T = thisArg;
+            k = 0;
+            while (k < len) {
+                var kValue;
+                if (k in O) {
+                    kValue = O[k];
+                    callback.call(T, kValue, k, O);
+                }
+                k++;
+            }
+        };
+    }
+
+    if (!Array.prototype.filter) {
+        Array.prototype.filter = function(callback, thisArg) {
+            if (this == null) throw new TypeError('this is null or not defined');
+            var O = Object(this);
+            var len = O.length >>> 0;
+            if (typeof callback !== 'function') throw new TypeError(callback + ' is not a function');
+            var res = [];
+            var T = thisArg;
+            var k = 0;
+            while (k < len) {
+                if (k in O) {
+                    var kValue = O[k];
+                    if (callback.call(T, kValue, k, O)) res.push(kValue);
+                }
+                k++;
+            }
+            return res;
+        };
+    }
+
+    if (!Array.prototype.find) {
+        Array.prototype.find = function(callback, thisArg) {
+            if (this == null) throw new TypeError('this is null or not defined');
+            var O = Object(this);
+            var len = O.length >>> 0;
+            if (typeof callback !== 'function') throw new TypeError(callback + ' is not a function');
+            var T = thisArg;
+            var k = 0;
+            while (k < len) {
+                var kValue = O[k];
+                if (callback.call(T, kValue, k, O)) return kValue;
+                k++;
+            }
+            return undefined;
+        };
+    }
+
+    if (!Array.prototype.some) {
+        Array.prototype.some = function(callback, thisArg) {
+            if (this == null) throw new TypeError('this is null or not defined');
+            var O = Object(this);
+            var len = O.length >>> 0;
+            if (typeof callback !== 'function') throw new TypeError(callback + ' is not a function');
+            var T = thisArg;
+            var k = 0;
+            while (k < len) {
+                if (k in O && callback.call(T, O[k], k, O)) return true;
+                k++;
+            }
+            return false;
+        };
+    }
+
+    if (!Array.prototype.indexOf) {
+        Array.prototype.indexOf = function(searchElement, fromIndex) {
+            if (this == null) throw new TypeError('this is null or not defined');
+            var O = Object(this);
+            var len = O.length >>> 0;
+            if (len === 0) return -1;
+            var n = fromIndex | 0;
+            if (n >= len) return -1;
+            var k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
+            while (k < len) {
+                if (k in O && O[k] === searchElement) return k;
+                k++;
+            }
+            return -1;
+        };
+    }
 
     var LAMPAC_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M20.331 14.644l-13.794-13.831 17.55 10.075zM2.938 0c-0.813 0.425-1.356 1.2-1.356 2.206v27.581c0 1.006 0.544 1.781 1.356 2.206l16.038-16zM29.512 14.1l-3.681-2.131-4.106 4.031 4.106 4.031 3.756-2.131c1.125-0.893 1.125-2.906-0.075-3.8zM6.538 31.188l17.55-10.075-3.756-3.756z" fill="currentColor"></path></svg>';
     
@@ -206,6 +311,25 @@
 
     function setHiddenButtons(hidden) {
         Lampa.Storage.set('button_hidden', hidden);
+    }
+
+    function getButtonDisplayModes() {
+        return Lampa.Storage.get('button_display_modes', {});
+    }
+
+    function setButtonDisplayModes(modes) {
+        Lampa.Storage.set('button_display_modes', modes);
+    }
+
+    function getButtonDisplayMode(btnId) {
+        var modes = getButtonDisplayModes();
+        return modes[btnId] || 1; // По умолчанию режим 1 (стандартный)
+    }
+
+    function setButtonDisplayMode(btnId, mode) {
+        var modes = getButtonDisplayModes();
+        modes[btnId] = mode;
+        setButtonDisplayModes(modes);
     }
 
     function getFolders() {
@@ -386,6 +510,57 @@
         });
     }
 
+    function applyButtonDisplayModes(buttons) {
+        buttons.forEach(function(btn) {
+            var id = getBtnIdentifier(btn);
+            var mode = getButtonDisplayMode(id);
+            
+            // Удаляем все классы режимов
+            btn.removeClass('button-mode-1 button-mode-2 button-mode-3');
+            
+            // Добавляем класс текущего режима
+            btn.addClass('button-mode-' + mode);
+            
+            // Универсальная обработка для всех кнопок с нестандартной структурой
+            // Проверяем есть ли у кнопки текстовые ноды или span элементы вне SVG
+            var hasTextContent = false;
+            btn.contents().each(function() {
+                if ((this.nodeType === 3 && this.nodeValue.trim()) || 
+                    (this.nodeName === 'SPAN' && !$(this).parent().is('svg') && !$(this).hasClass('text-wrapper'))) {
+                    hasTextContent = true;
+                    return false; // break
+                }
+            });
+            
+            if (hasTextContent) {
+                // Сначала разворачиваем все обернутые ноды
+                btn.find('.text-wrapper').each(function() {
+                    $(this).replaceWith($(this).contents());
+                });
+                
+                // Получаем все текстовые ноды и span элементы (не в SVG и не специальные классы)
+                var nodesToWrap = [];
+                btn.contents().each(function() {
+                    if (this.nodeType === 3 && this.nodeValue.trim()) { // Text node
+                        nodesToWrap.push(this);
+                    } else if (this.nodeName === 'SPAN' && 
+                               !$(this).parent().is('svg') && 
+                               !$(this).hasClass('text-wrapper') && 
+                               !$(this).hasClass('shots-view-button__title') &&
+                               !$(this).hasClass('shots-view-button__count')) {
+                        // Для span элемента - добавляем класс вместо оборачивания
+                        $(this).addClass('text-wrapper');
+                    }
+                });
+                
+                // Оборачиваем только текстовые ноды в .text-wrapper
+                nodesToWrap.forEach(function(node) {
+                    $(node).wrap('<span class="text-wrapper"></span>');
+                });
+            }
+        });
+    }
+
     function animateBtnFadeIn(buttons) {
         buttons.forEach(function(btn, index) {
             btn.css({
@@ -540,6 +715,7 @@
         
         currentButtons = filteredButtons;
         applyBtnVisibility(filteredButtons);
+        applyButtonDisplayModes(filteredButtons);
         
         var targetContainer = currentContainer.find('.full-start-new__buttons');
         if (!targetContainer.length) return;
@@ -1124,7 +1300,17 @@
             openCreateFolderDialog();
         });
 
+        // Сначала добавляем кнопку создания папки
         list.append(createFolderBtn);
+
+        // Затем добавляем заголовок с подписями
+        var header = $('<div class="menu-edit-list__header">' +
+            '<div class="menu-edit-list__header-spacer"></div>' +
+            '<div class="menu-edit-list__header-move">Сдвиг</div>' +
+            '<div class="menu-edit-list__header-mode">Вид</div>' +
+            '<div class="menu-edit-list__header-toggle">Показ</div>' +
+        '</div>');
+        list.append(header);
 
         function createFolderItem(folder) {
             var item = $('<div class="menu-edit-list__item folder-item">' +
@@ -1356,11 +1542,12 @@
 
         function createButtonItem(btn) {
             var displayName = getBtnDisplayText(btn, currentButtons);
-            var icon = btn.find('svg').clone();
+            var icon = btn.find('svg').first().clone();
             var btnId = getBtnIdentifier(btn);
             var isHidden = hidden.indexOf(btnId) !== -1;
+            var displayMode = getButtonDisplayMode(btnId);
 
-            var item = $('<div class="menu-edit-list__item">' +
+            var item = $('<div class="menu-edit-list__item' + (isHidden ? ' item-hidden' : '') + '">' +
                 '<div class="menu-edit-list__icon"></div>' +
                 '<div class="menu-edit-list__title">' + displayName + '</div>' +
                 '<div class="menu-edit-list__move move-up selector">' +
@@ -1371,6 +1558,12 @@
                 '<div class="menu-edit-list__move move-down selector">' +
                     '<svg width="22" height="14" viewBox="0 0 22 14" fill="none" xmlns="http://www.w3.org/2000/svg">' +
                         '<path d="M2 2L11 11L20 2" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>' +
+                    '</svg>' +
+                '</div>' +
+                '<div class="menu-edit-list__display-mode selector" data-mode="' + displayMode + '">' +
+                    '<svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                        '<rect x="1.89111" y="1.78369" width="21.793" height="21.793" rx="3.5" stroke="currentColor" stroke-width="3"/>' +
+                        '<text x="13" y="17" text-anchor="middle" fill="currentColor" font-size="12" font-weight="bold" class="mode-number">' + displayMode + '</text>' +
                     '</svg>' +
                 '</div>' +
                 '<div class="menu-edit-list__toggle toggle selector">' +
@@ -1418,6 +1611,20 @@
                 }
             });
 
+            item.find('.menu-edit-list__display-mode').on('hover:enter', function() {
+                var currentMode = parseInt($(this).attr('data-mode')) || 1;
+                var newMode = currentMode >= 3 ? 1 : currentMode + 1;
+                
+                $(this).attr('data-mode', newMode);
+                $(this).find('.mode-number').text(newMode);
+                
+                setButtonDisplayMode(btnId, newMode);
+                
+                // Применяем режим к кнопке
+                btn.removeClass('button-mode-1 button-mode-2 button-mode-3');
+                btn.addClass('button-mode-' + newMode);
+            });
+
             item.find('.toggle').on('hover:enter', function() {
                 var hidden = getHiddenButtons();
                 var index = hidden.indexOf(btnId);
@@ -1426,10 +1633,12 @@
                     hidden.splice(index, 1);
                     btn.removeClass('hidden');
                     item.find('.dot').attr('opacity', '1');
+                    item.removeClass('item-hidden');
                 } else {
                     hidden.push(btnId);
                     btn.addClass('hidden');
                     item.find('.dot').attr('opacity', '0');
+                    item.addClass('item-hidden');
                 }
                 
                 setHiddenButtons(hidden);
@@ -1492,6 +1701,7 @@
             Lampa.Storage.set('button_hidden', []);
             Lampa.Storage.set('button_folders', []);
             Lampa.Storage.set('button_item_order', []);
+            Lampa.Storage.set('button_display_modes', {}); // Сброс режимов отображения
             Lampa.Modal.close();
             Lampa.Noty.show(getTranslation('buttons_plugin_settings_reset'));
             
@@ -1585,6 +1795,7 @@
 
         currentButtons = filteredButtons;
         applyBtnVisibility(filteredButtons);
+        applyButtonDisplayModes(filteredButtons);
 
         targetContainer.children().detach();
         
@@ -1757,7 +1968,45 @@
             '.folder-create-confirm.focus { border: 3px solid rgba(255,255,255,0.8); }' +
             '.folder-reset-button { background: rgba(200,100,100,0.3); margin-top: 1em; border-radius: 0.3em; }' +
             '.folder-reset-button.focus { border: 3px solid rgba(255,255,255,0.8); }' +
+            '.menu-edit-list__move { width: 2.4em; height: 2.4em; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-right: 0.5em; }' +
+            '.menu-edit-list__move svg { width: 1.2em !important; height: 1.2em !important; }' +
+            '.menu-edit-list__move.focus { border: 2px solid rgba(255,255,255,0.8); border-radius: 0.3em; }' +
+            '.menu-edit-list__toggle { width: 2.4em; height: 2.4em; display: flex; align-items: center; justify-content: center; cursor: pointer; }' +
+            '.menu-edit-list__toggle svg { width: 1.2em !important; height: 1.2em !important; }' +
             '.menu-edit-list__toggle.focus { border: 2px solid rgba(255,255,255,0.8); border-radius: 0.3em; }' +
+            '.menu-edit-list__display-mode { width: 2.4em; height: 2.4em; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-right: 0.5em; }' +
+            '.menu-edit-list__display-mode svg { width: 1.2em !important; height: 1.2em !important; }' +
+            '.menu-edit-list__display-mode.focus { border: 2px solid rgba(255,255,255,0.8); border-radius: 0.3em; background: rgba(255,255,255,0.9); }' +
+            '.menu-edit-list__display-mode.focus svg { color: #000 !important; }' +
+            '.menu-edit-list__display-mode.focus rect { stroke: #000 !important; }' +
+            '.menu-edit-list__display-mode.focus text { fill: #000 !important; }' +
+            '.menu-edit-list__header { display: flex; align-items: center; padding: 0.5em 1em; margin-bottom: 0.5em; opacity: 0.6; font-size: 0.85em; }' +
+            '.menu-edit-list__header-spacer { flex: 1; }' +
+            '.menu-edit-list__header-move { width: 5.3em; text-align: center; margin-right: 0.5em; }' +
+            '.menu-edit-list__header-mode { width: 2.9em; text-align: center; }' +
+            '.menu-edit-list__header-toggle { width: 2.4em; text-align: center; margin-left: 0.5em; }' +
+            '.menu-edit-list__create-folder { margin-bottom: 1em; }' +
+            '.menu-edit-list__item { display: flex; align-items: center; position: relative; }' +
+            '.menu-edit-list__item .menu-edit-list__icon { flex-shrink: 0; }' +
+            '.menu-edit-list__item .menu-edit-list__title { flex: 1; min-width: 0; }' +
+            '.menu-edit-list__item .menu-edit-list__move, .menu-edit-list__item .menu-edit-list__display-mode, .menu-edit-list__item .menu-edit-list__toggle { flex-shrink: 0; }' +
+            '.menu-edit-list__item.item-hidden { opacity: 0.4; }' +
+            '.menu-edit-list__item.item-hidden .menu-edit-list__title { opacity: 0.6; }' +
+            '.menu-edit-list__item.item-hidden .menu-edit-list__icon { opacity: 0.5; }' +
+            '' +
+            '/* Режим 1: Стандартный (иконка, текст при наведении) */' +
+            '.full-start__button.button-mode-1 .text-wrapper { display: none !important; }' +
+            '.full-start__button.button-mode-1:hover .text-wrapper, .full-start__button.button-mode-1.focus .text-wrapper { display: inline !important; }' +
+            '.full-start__button.button-mode-1 > span:not(.text-wrapper) { opacity: 0 !important; transition: opacity 0.3s; }' +
+            '.full-start__button.button-mode-1:hover > span:not(.text-wrapper), .full-start__button.button-mode-1.focus > span:not(.text-wrapper) { opacity: 1 !important; }' +
+            '' +
+            '/* Режим 2: Только иконка (текст всегда скрыт) */' +
+            '.full-start__button.button-mode-2 .text-wrapper { display: none !important; }' +
+            '.full-start__button.button-mode-2 > span:not(.text-wrapper) { display: none !important; }' +
+            '' +
+            '/* Режим 3: Иконка + текст всегда */' +
+            '.full-start__button.button-mode-3 .text-wrapper { display: inline !important; }' +
+            '.full-start__button.button-mode-3 > span:not(.text-wrapper) { opacity: 1 !important; display: inline !important; }' +
         '</style>');
         $('body').append(style);
 
