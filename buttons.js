@@ -1,6 +1,6 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.1.0
+ * Версия: 1.1.1
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -252,6 +252,27 @@
             en: 'Settings reset',
             be: 'Налады скінуты',
             zh: '设置已重置'
+        },
+        buttons_plugin_move: {
+            uk: 'Зсув',
+            ru: 'Сдвиг',
+            en: 'Move',
+            be: 'Зрух',
+            zh: '移动'
+        },
+        buttons_plugin_view: {
+            uk: 'Вигляд',
+            ru: 'Вид',
+            en: 'View',
+            be: 'Выгляд',
+            zh: '视图'
+        },
+        buttons_plugin_show: {
+            uk: 'Показ',
+            ru: 'Показ',
+            en: 'Show',
+            be: 'Паказ',
+            zh: '显示'
         }
     });
     
@@ -1306,9 +1327,9 @@
         // Затем добавляем заголовок с подписями
         var header = $('<div class="menu-edit-list__header">' +
             '<div class="menu-edit-list__header-spacer"></div>' +
-            '<div class="menu-edit-list__header-move">Сдвиг</div>' +
-            '<div class="menu-edit-list__header-mode">Вид</div>' +
-            '<div class="menu-edit-list__header-toggle">Показ</div>' +
+            '<div class="menu-edit-list__header-move">' + getTranslation('buttons_plugin_move') + '</div>' +
+            '<div class="menu-edit-list__header-mode">' + getTranslation('buttons_plugin_view') + '</div>' +
+            '<div class="menu-edit-list__header-toggle">' + getTranslation('buttons_plugin_show') + '</div>' +
         '</div>');
         list.append(header);
 
