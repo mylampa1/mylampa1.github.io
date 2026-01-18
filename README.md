@@ -1,3 +1,9 @@
+# Коллекция плагинов
+
+Telegram автора: [@Cheeze_l](https://t.me/Cheeze_l)
+
+---
+
 ## 📦 Информация о плагинах
 
 ### 🎛️ Buttons.js - Управление кнопками
@@ -52,7 +58,3 @@ Lampa.Utils.putScriptAsync(["https://mylampa1.github.io/source_sort.js"], functi
 ```
 
 ---
-
-## 👨‍💻 Автор
-
-**@Cheeze_l**
