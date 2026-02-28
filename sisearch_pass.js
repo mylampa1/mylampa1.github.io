@@ -1,6 +1,6 @@
 /**
  * Плагин родительского контроля для поиска Клубники в Lampa
- * Версия: 1.0.1
+ * Версия: 1.0.2
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -31,7 +31,7 @@
  * Если есть желающие поддержать автора, пишите @Cheeze_l
  */
  
-(function() {
+(function () {
   'use strict';
 
   if (window.sisiParentalControlLoaded) return;
@@ -59,56 +59,97 @@
     };
   }
 
+  function clearResults() {
+    if (Lampa.Activity && Lampa.Activity.active() && Lampa.Activity.active().component === 'search') {
+      var activity = Lampa.Activity.active().activity;
+      if (activity && activity.render) {
+        var render = activity.render();
+        var results = render.find('.search-results');
+        if (results.length) {
+          results.empty();
+        }
+      }
+    }
+  }
+
   function wrapSisiSource(source) {
     var originalSearch = source.search;
     var lastParams = null;
-    
-    source.search = function(params, oncomplite) {
+
+    source.search = function (params, oncomplite) {
       lastParams = { params: params, oncomplite: oncomplite };
-      
+
       if (!Lampa.Storage.field('parental_control') || window.sisiParentalAuthorized) {
         originalSearch.call(source, params, oncomplite);
         return;
       }
-      
+
+      clearResults();
       oncomplite([createAuthCard()]);
     };
-    
+
+    if (source.clear) {
+      var originalClear = source.clear;
+      source.clear = function () {
+        if (Lampa.Storage.field('parental_control') && !window.sisiParentalAuthorized) {
+          clearResults();
+        }
+        if (originalClear) originalClear.call(source);
+      };
+    }
+
     var originalOnSelect = source.onSelect;
-    source.onSelect = function(params, close) {
+    source.onSelect = function (params, close) {
       if (params.element && params.element.custom_type === 'sisi_auth_required') {
         if (close) close();
-        setTimeout(function() {
+        setTimeout(function () {
           if (Lampa.ParentalControl && Lampa.ParentalControl.query) {
-            Lampa.ParentalControl.query(function() {
+            Lampa.ParentalControl.query(function () {
               window.sisiParentalAuthorized = true;
               Lampa.Noty.show(Lampa.Lang.translate('sisi_parental_pin_accepted'));
               if (lastParams) {
-                setTimeout(function() {
+                setTimeout(function () {
                   originalSearch.call(source, lastParams.params, lastParams.oncomplite);
                 }, 300);
               }
-            }, function() {
+            }, function () {
               Lampa.Noty.show(Lampa.Lang.translate('sisi_parental_pin_wrong'));
               if (lastParams) lastParams.oncomplite([createAuthCard()]);
             });
           }
         }, 100);
       } else if (originalOnSelect) {
-        originalOnSelect.call(source, params, close);
+        if (!Lampa.Storage.field('parental_control') || window.sisiParentalAuthorized) {
+          originalOnSelect.call(source, params, close);
+        } else {
+          // Prevent any selection if not authorized
+          if (close) close();
+          Lampa.Noty.show(Lampa.Lang.translate('sisi_parental_auth_required'));
+
+          if (Lampa.ParentalControl && Lampa.ParentalControl.query) {
+            Lampa.ParentalControl.query(function () {
+              window.sisiParentalAuthorized = true;
+              Lampa.Noty.show(Lampa.Lang.translate('sisi_parental_pin_accepted'));
+              originalOnSelect.call(source, params, close);
+            }, function () {
+              Lampa.Noty.show(Lampa.Lang.translate('sisi_parental_pin_wrong'));
+            });
+          }
+        }
       }
     };
   }
 
+
   function interceptSearch() {
     var attempts = 0;
-    var wait = setInterval(function() {
+    var wait = setInterval(function () {
       if (Lampa.Search) {
         clearInterval(wait);
-        
+
         if (Lampa.Search.addSource) {
           var originalAddSource = Lampa.Search.addSource;
-          Lampa.Search.addSource = function(source) {
+          Lampa.Search.addSource = function (source) {
             if (source && isSisiSource(source.title)) {
               wrapSisiSource(source);
             }
@@ -117,11 +158,11 @@
         } else {
           var _addSource = null;
           Object.defineProperty(Lampa.Search, 'addSource', {
-            get: function() {
+            get: function () {
               return _addSource;
             },
-            set: function(fn) {
-              _addSource = function(source) {
+            set: function (fn) {
+              _addSource = function (source) {
                 if (source && isSisiSource(source.title)) {
                   wrapSisiSource(source);
                 }
@@ -139,16 +180,21 @@
 
   function resetAuth() {
     if (Lampa.Listener) {
-      Lampa.Listener.follow('app', function(e) {
+      Lampa.Listener.follow('app', function (e) {
         if (e.type === 'exit' || e.type === 'destroy') {
           window.sisiParentalAuthorized = false;
         }
       });
+      Lampa.Listener.follow('activity', function (e) {
+        if (e.type === 'start' && e.component !== 'search' && window.sisiParentalAuthorized) {
+          window.sisiParentalAuthorized = false;
+        }
+      });
     }
-    
+
     if (Lampa.Storage) {
       var originalSet = Lampa.Storage.set;
-      Lampa.Storage.set = function(name, value) {
+      Lampa.Storage.set = function (name, value) {
         if (name === 'parental_control') {
           window.sisiParentalAuthorized = false;
         }
@@ -160,12 +206,12 @@
   function addTranslations() {
     if (!Lampa.Lang) return;
     Lampa.Lang.add({
-      sisi_parental_control: {ru: '🔒 Родительский контроль', uk: '🔒 Батьківський контроль', en: '🔒 Parental Control', be: '🔒 Бацькоўскі кантроль', zh: '🔒 家长控制'},
-      sisi_parental_auth_required: {ru: 'Требуется авторизация', uk: 'Потрібна авторизація', en: 'Authorization required', be: 'Патрабуецца аўтарызацыя', zh: '需要授权'},
-      sisi_parental_click_pin: {ru: 'Нажмите для ввода PIN-кода', uk: 'Натисніть для введення PIN-коду', en: 'Click to enter PIN code', be: 'Націсніце для ўводу PIN-кода', zh: '点击输入PIN码'},
-      sisi_parental_pin_description: {ru: 'Для доступа к контенту необходимо ввести PIN-код', uk: 'Для доступу до контенту необхідно ввести PIN-код', en: 'Enter PIN code to access content', be: 'Для доступу да кантэнту неабходна ўвесці PIN-код', zh: '输入PIN码访问内容'},
-      sisi_parental_pin_accepted: {ru: 'PIN-код принят. Повторите поиск', uk: 'PIN-код прийнято. Повторіть пошук', en: 'PIN accepted. Repeat search', be: 'PIN-код прыняты. Паўтарыце пошук', zh: 'PIN已接受。重复搜索'},
-      sisi_parental_pin_wrong: {ru: 'Неверный PIN-код', uk: 'Невірний PIN-код', en: 'Wrong PIN', be: 'Няправільны PIN-код', zh: 'PIN错误'}
+      sisi_parental_control: { ru: '🔒 Родительский контроль', uk: '🔒 Батьківський контроль', en: '🔒 Parental Control', be: '🔒 Бацькоўскі кантроль', zh: '🔒 家长控制' },
+      sisi_parental_auth_required: { ru: 'Требуется авторизация', uk: 'Потрібна авторизація', en: 'Authorization required', be: 'Патрабуецца аўтарызацыя', zh: '需要授权' },
+      sisi_parental_click_pin: { ru: 'Нажмите для ввода PIN-кода', uk: 'Натисніть для введення PIN-коду', en: 'Click to enter PIN code', be: 'Націсніце для ўводу PIN-кода', zh: '点击输入PIN码' },
+      sisi_parental_pin_description: { ru: 'Для доступа к контенту необходимо ввести PIN-код', uk: 'Для доступу до контенту необхідно ввести PIN-код', en: 'Enter PIN code to access content', be: 'Для доступу да кантэнту неабходна ўвесці PIN-код', zh: '输入PIN码访问内容' },
+      sisi_parental_pin_accepted: { ru: 'PIN-код принят. Повторите поиск', uk: 'PIN-код прийнято. Повторіть пошук', en: 'PIN accepted. Repeat search', be: 'PIN-код прыняты. Паўтарыце пошук', zh: 'PIN已接受。重复搜索' },
+      sisi_parental_pin_wrong: { ru: 'Неверный PIN-код', uk: 'Невірний PIN-код', en: 'Wrong PIN', be: 'Няправільны PIN-код', zh: 'PIN错误' }
     });
   }
 
@@ -174,7 +220,7 @@
       setTimeout(init, 100);
       return;
     }
-    
+
     addTranslations();
     resetAuth();
     interceptSearch();
@@ -184,7 +230,7 @@
     interceptSearch();
     init();
   } else {
-    var waitLampa = setInterval(function() {
+    var waitLampa = setInterval(function () {
       if (window.Lampa) {
         clearInterval(waitLampa);
         interceptSearch();
