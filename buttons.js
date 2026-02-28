@@ -1,6 +1,6 @@
 /**
  * Плагин управления кнопками Lampa
- * Версия: 1.1.1
+ * Версия: 1.1.2
  * Автор: @Cheeze_l
  * 
  * Описание:
@@ -42,12 +42,12 @@
  * Если есть желающие поддержать автора, пишите @Cheeze_l
  */
 
-(function() {
+(function () {
     'use strict';
 
     // Polyfills для совместимости со старыми устройствами
     if (!Array.prototype.forEach) {
-        Array.prototype.forEach = function(callback, thisArg) {
+        Array.prototype.forEach = function (callback, thisArg) {
             var T, k;
             if (this == null) throw new TypeError('this is null or not defined');
             var O = Object(this);
@@ -67,7 +67,7 @@
     }
 
     if (!Array.prototype.filter) {
-        Array.prototype.filter = function(callback, thisArg) {
+        Array.prototype.filter = function (callback, thisArg) {
             if (this == null) throw new TypeError('this is null or not defined');
             var O = Object(this);
             var len = O.length >>> 0;
@@ -87,7 +87,7 @@
     }
 
     if (!Array.prototype.find) {
-        Array.prototype.find = function(callback, thisArg) {
+        Array.prototype.find = function (callback, thisArg) {
             if (this == null) throw new TypeError('this is null or not defined');
             var O = Object(this);
             var len = O.length >>> 0;
@@ -104,7 +104,7 @@
     }
 
     if (!Array.prototype.some) {
-        Array.prototype.some = function(callback, thisArg) {
+        Array.prototype.some = function (callback, thisArg) {
             if (this == null) throw new TypeError('this is null or not defined');
             var O = Object(this);
             var len = O.length >>> 0;
@@ -120,7 +120,7 @@
     }
 
     if (!Array.prototype.indexOf) {
-        Array.prototype.indexOf = function(searchElement, fromIndex) {
+        Array.prototype.indexOf = function (searchElement, fromIndex) {
             if (this == null) throw new TypeError('this is null or not defined');
             var O = Object(this);
             var len = O.length >>> 0;
@@ -137,15 +137,15 @@
     }
 
     var LAMPAC_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M20.331 14.644l-13.794-13.831 17.55 10.075zM2.938 0c-0.813 0.425-1.356 1.2-1.356 2.206v27.581c0 1.006 0.544 1.781 1.356 2.206l16.038-16zM29.512 14.1l-3.681-2.131-4.106 4.031 4.106 4.031 3.756-2.131c1.125-0.893 1.125-2.906-0.075-3.8zM6.538 31.188l17.55-10.075-3.756-3.756z" fill="currentColor"></path></svg>';
-    
+
     var EXCLUDED_CLASSES = ['button--play', 'button--edit-order', 'button--folder'];
-    
+
     // Функция перевода
     function getTranslation(key) {
         var translated = Lampa.Lang.translate(key);
         return translated && translated !== key ? translated : key.replace('buttons_plugin_', '');
     }
-    
+
     // Добавляем переводы для UI элементов плагина
     Lampa.Lang.add({
         buttons_plugin_button_order: {
@@ -275,7 +275,7 @@
             zh: '显示'
         }
     });
-    
+
     var DEFAULT_GROUPS = [
         { name: 'online', patterns: ['online', 'lampac', 'modss', 'showy'] },
         { name: 'torrent', patterns: ['torrent'] },
@@ -293,9 +293,9 @@
 
     // Вспомогательная функция для поиска кнопки
     function findButton(btnId) {
-        var btn = allButtonsOriginal.find(function(b) { return getBtnIdentifier(b) === btnId; });
+        var btn = allButtonsCache.find(function (b) { return getBtnIdentifier(b) === btnId; });
         if (!btn) {
-            btn = allButtonsCache.find(function(b) { return getBtnIdentifier(b) === btnId; });
+            btn = allButtonsOriginal.find(function (b) { return getBtnIdentifier(b) === btnId; });
         }
         return btn;
     }
@@ -304,7 +304,7 @@
     function getButtonsInFolders() {
         var folders = getFolders();
         var buttonsInFolders = [];
-        folders.forEach(function(folder) {
+        folders.forEach(function (folder) {
             buttonsInFolders = buttonsInFolders.concat(folder.buttons);
         });
         return buttonsInFolders;
@@ -365,40 +365,40 @@
         var classes = button.attr('class') || '';
         var text = button.find('span').text().trim().replace(/\s+/g, '_');
         var subtitle = button.attr('data-subtitle') || '';
-        
+
         if (classes.indexOf('modss') !== -1 || text.indexOf('MODS') !== -1 || text.indexOf('MOD') !== -1) {
             return 'modss_online_button';
         }
-        
+
         if (classes.indexOf('showy') !== -1 || text.indexOf('Showy') !== -1) {
             return 'showy_online_button';
         }
-        
-        var viewClasses = classes.split(' ').filter(function(c) { 
-            return c.indexOf('view--') === 0 || c.indexOf('button--') === 0; 
+
+        var viewClasses = classes.split(' ').filter(function (c) {
+            return c.indexOf('view--') === 0 || c.indexOf('button--') === 0;
         }).join('_');
-        
+
         if (!viewClasses && !text) {
             return 'button_unknown';
         }
-        
+
         var id = viewClasses + '_' + text;
-        
+
         if (subtitle) {
             id = id + '_' + subtitle.replace(/\s+/g, '_').substring(0, 30);
         }
-        
+
         return id;
     }
 
     function detectBtnCategory(button) {
         var classes = button.attr('class') || '';
-        
+
         // Специальная проверка для Shots - должна быть первой!
         if (classes.indexOf('shots-view-button') !== -1 || classes.indexOf('shots') !== -1) {
             return 'shots';
         }
-        
+
         for (var i = 0; i < DEFAULT_GROUPS.length; i++) {
             var group = DEFAULT_GROUPS[i];
             for (var j = 0; j < group.patterns.length; j++) {
@@ -407,7 +407,7 @@
                 }
             }
         }
-        
+
         return 'other';
     }
 
@@ -423,7 +423,7 @@
 
     function groupBtnsByType(container) {
         var allButtons = container.find('.full-start__button').not('.button--edit-order, .button--folder, .button--play');
-        
+
         var categories = {
             online: [],
             torrent: [],
@@ -435,25 +435,25 @@
             other: []
         };
 
-        allButtons.each(function() {
+        allButtons.each(function () {
             var $btn = $(this);
-            
+
             // Пропускаем кнопки из .person-start__bottom (info, subscribe)
             if ($btn.closest('.person-start__bottom').length) {
                 return;
             }
-            
+
             if (shouldSkipBtn($btn)) return;
 
             var type = detectBtnCategory($btn);
-            
+
             if (type === 'online' && $btn.hasClass('lampac--button') && !$btn.hasClass('modss--button') && !$btn.hasClass('showy--button')) {
                 var svgElement = $btn.find('svg').first();
                 if (svgElement.length && !svgElement.hasClass('modss-online-icon')) {
                     svgElement.replaceWith(LAMPAC_ICON);
                 }
             }
-            
+
             if (categories[type]) {
                 categories[type].push($btn);
             } else {
@@ -466,11 +466,11 @@
 
     function arrangeBtnsByOrder(buttons) {
         var customOrder = getCustomOrder();
-        
+
         var priority = [];
         var regular = [];
-        
-        buttons.forEach(function(btn) {
+
+        buttons.forEach(function (btn) {
             var id = getBtnIdentifier(btn);
             if (id === 'modss_online_button' || id === 'showy_online_button') {
                 priority.push(btn);
@@ -478,8 +478,8 @@
                 regular.push(btn);
             }
         });
-        
-        priority.sort(function(a, b) {
+
+        priority.sort(function (a, b) {
             var idA = getBtnIdentifier(a);
             var idB = getBtnIdentifier(b);
             if (idA === 'modss_online_button') return -1;
@@ -488,9 +488,9 @@
             if (idB === 'showy_online_button') return 1;
             return 0;
         });
-        
+
         if (!customOrder.length) {
-            regular.sort(function(a, b) {
+            regular.sort(function (a, b) {
                 var typeOrder = ['online', 'torrent', 'trailer', 'shots', 'book', 'reaction', 'subscribe', 'other'];
                 var typeA = detectBtnCategory(a);
                 var typeB = detectBtnCategory(b);
@@ -506,7 +506,7 @@
         var sorted = [];
         var remaining = regular.slice();
 
-        customOrder.forEach(function(id) {
+        customOrder.forEach(function (id) {
             for (var i = 0; i < remaining.length; i++) {
                 if (getBtnIdentifier(remaining[i]) === id) {
                     sorted.push(remaining[i]);
@@ -521,7 +521,7 @@
 
     function applyBtnVisibility(buttons) {
         var hidden = getHiddenButtons();
-        buttons.forEach(function(btn) {
+        buttons.forEach(function (btn) {
             var id = getBtnIdentifier(btn);
             if (hidden.indexOf(id) !== -1) {
                 btn.addClass('hidden');
@@ -532,50 +532,50 @@
     }
 
     function applyButtonDisplayModes(buttons) {
-        buttons.forEach(function(btn) {
+        buttons.forEach(function (btn) {
             var id = getBtnIdentifier(btn);
             var mode = getButtonDisplayMode(id);
-            
+
             // Удаляем все классы режимов
             btn.removeClass('button-mode-1 button-mode-2 button-mode-3');
-            
+
             // Добавляем класс текущего режима
             btn.addClass('button-mode-' + mode);
-            
+
             // Универсальная обработка для всех кнопок с нестандартной структурой
             // Проверяем есть ли у кнопки текстовые ноды или span элементы вне SVG
             var hasTextContent = false;
-            btn.contents().each(function() {
-                if ((this.nodeType === 3 && this.nodeValue.trim()) || 
+            btn.contents().each(function () {
+                if ((this.nodeType === 3 && this.nodeValue.trim()) ||
                     (this.nodeName === 'SPAN' && !$(this).parent().is('svg') && !$(this).hasClass('text-wrapper'))) {
                     hasTextContent = true;
                     return false; // break
                 }
             });
-            
+
             if (hasTextContent) {
                 // Сначала разворачиваем все обернутые ноды
-                btn.find('.text-wrapper').each(function() {
+                btn.find('.text-wrapper').each(function () {
                     $(this).replaceWith($(this).contents());
                 });
-                
+
                 // Получаем все текстовые ноды и span элементы (не в SVG и не специальные классы)
                 var nodesToWrap = [];
-                btn.contents().each(function() {
+                btn.contents().each(function () {
                     if (this.nodeType === 3 && this.nodeValue.trim()) { // Text node
                         nodesToWrap.push(this);
-                    } else if (this.nodeName === 'SPAN' && 
-                               !$(this).parent().is('svg') && 
-                               !$(this).hasClass('text-wrapper') && 
-                               !$(this).hasClass('shots-view-button__title') &&
-                               !$(this).hasClass('shots-view-button__count')) {
+                    } else if (this.nodeName === 'SPAN' &&
+                        !$(this).parent().is('svg') &&
+                        !$(this).hasClass('text-wrapper') &&
+                        !$(this).hasClass('shots-view-button__title') &&
+                        !$(this).hasClass('shots-view-button__count')) {
                         // Для span элемента - добавляем класс вместо оборачивания
                         $(this).addClass('text-wrapper');
                     }
                 });
-                
+
                 // Оборачиваем только текстовые ноды в .text-wrapper
-                nodesToWrap.forEach(function(node) {
+                nodesToWrap.forEach(function (node) {
                     $(node).wrap('<span class="text-wrapper"></span>');
                 });
             }
@@ -583,7 +583,7 @@
     }
 
     function animateBtnFadeIn(buttons) {
-        buttons.forEach(function(btn, index) {
+        buttons.forEach(function (btn, index) {
             btn.css({
                 'opacity': '0',
                 'animation': 'button-fade-in 0.4s ease forwards',
@@ -597,7 +597,7 @@
             '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 29" fill="none"><use xlink:href="#sprite-edit"></use></svg>' +
             '</div>');
 
-        btn.on('hover:enter', function() {
+        btn.on('hover:enter', function () {
             openEditDialog();
         });
 
@@ -611,7 +611,7 @@
 
     function saveOrder() {
         var order = [];
-        currentButtons.forEach(function(btn) {
+        currentButtons.forEach(function (btn) {
             order.push(getBtnIdentifier(btn));
         });
         setCustomOrder(order);
@@ -620,11 +620,11 @@
     function saveItemOrder() {
         var order = [];
         var items = $('.menu-edit-list .menu-edit-list__item').not('.menu-edit-list__create-folder');
-        
-        items.each(function() {
+
+        items.each(function () {
             var $item = $(this);
             var itemType = $item.data('itemType');
-            
+
             if (itemType === 'folder') {
                 order.push({
                     type: 'folder',
@@ -637,13 +637,13 @@
                 });
             }
         });
-        
+
         setItemOrder(order);
     }
 
     function applyChanges() {
         if (!currentContainer) return;
-        
+
         var categories = groupBtnsByType(currentContainer);
         var allButtons = []
             .concat(categories.online)
@@ -654,26 +654,26 @@
             .concat(categories.reaction)
             .concat(categories.subscribe)
             .concat(categories.other);
-        
+
         allButtons = arrangeBtnsByOrder(allButtons);
         allButtonsCache = allButtons;
-        
+
         var folders = getFolders();
         var foldersUpdated = false;
-        
-        folders.forEach(function(folder) {
+
+        folders.forEach(function (folder) {
             var updatedButtons = [];
             var usedButtons = [];
-            
-            folder.buttons.forEach(function(oldBtnId) {
+
+            folder.buttons.forEach(function (oldBtnId) {
                 var found = false;
-                
+
                 for (var i = 0; i < allButtons.length; i++) {
                     var btn = allButtons[i];
                     var newBtnId = getBtnIdentifier(btn);
-                    
+
                     if (usedButtons.indexOf(newBtnId) !== -1) continue;
-                    
+
                     if (newBtnId === oldBtnId) {
                         updatedButtons.push(newBtnId);
                         usedButtons.push(newBtnId);
@@ -681,17 +681,17 @@
                         break;
                     }
                 }
-                
+
                 if (!found) {
                     for (var i = 0; i < allButtons.length; i++) {
                         var btn = allButtons[i];
                         var newBtnId = getBtnIdentifier(btn);
-                        
+
                         if (usedButtons.indexOf(newBtnId) !== -1) continue;
-                        
+
                         var text = btn.find('span').text().trim();
                         var classes = btn.attr('class') || '';
-                        
+
                         if ((oldBtnId.indexOf('modss') !== -1 || oldBtnId.indexOf('MODS') !== -1) &&
                             (classes.indexOf('modss') !== -1 || text.indexOf('MODS') !== -1)) {
                             updatedButtons.push(newBtnId);
@@ -699,7 +699,7 @@
                             found = true;
                             break;
                         } else if ((oldBtnId.indexOf('showy') !== -1 || oldBtnId.indexOf('Showy') !== -1) &&
-                                   (classes.indexOf('showy') !== -1 || text.indexOf('Showy') !== -1)) {
+                            (classes.indexOf('showy') !== -1 || text.indexOf('Showy') !== -1)) {
                             updatedButtons.push(newBtnId);
                             usedButtons.push(newBtnId);
                             found = true;
@@ -707,52 +707,52 @@
                         }
                     }
                 }
-                
+
                 if (!found) {
                     updatedButtons.push(oldBtnId);
                 }
             });
-            
-            if (updatedButtons.length !== folder.buttons.length || 
-                updatedButtons.some(function(id, i) { return id !== folder.buttons[i]; })) {
+
+            if (updatedButtons.length !== folder.buttons.length ||
+                updatedButtons.some(function (id, i) { return id !== folder.buttons[i]; })) {
                 folder.buttons = updatedButtons;
                 foldersUpdated = true;
             }
         });
-        
+
         if (foldersUpdated) {
             setFolders(folders);
         }
-        
+
         // Оптимизация: получаем buttonsInFolders один раз
         var buttonsInFolders = [];
-        folders.forEach(function(folder) {
+        folders.forEach(function (folder) {
             buttonsInFolders = buttonsInFolders.concat(folder.buttons);
         });
-        
-        var filteredButtons = allButtons.filter(function(btn) {
+
+        var filteredButtons = allButtons.filter(function (btn) {
             return buttonsInFolders.indexOf(getBtnIdentifier(btn)) === -1;
         });
-        
+
         currentButtons = filteredButtons;
         applyBtnVisibility(filteredButtons);
         applyButtonDisplayModes(filteredButtons);
-        
+
         var targetContainer = currentContainer.find('.full-start-new__buttons');
         if (!targetContainer.length) return;
 
         targetContainer.find('.full-start__button').not('.button--edit-order').detach();
-        
+
         var itemOrder = getItemOrder();
         var visibleButtons = [];
-        
+
         if (itemOrder.length > 0) {
             var addedFolders = [];
             var addedButtons = [];
-            
-            itemOrder.forEach(function(item) {
+
+            itemOrder.forEach(function (item) {
                 if (item.type === 'folder') {
-                    var folder = folders.find(function(f) { return f.id === item.id; });
+                    var folder = folders.find(function (f) { return f.id === item.id; });
                     if (folder) {
                         var folderBtn = createFolderButton(folder);
                         targetContainer.append(folderBtn);
@@ -762,7 +762,7 @@
                 } else if (item.type === 'button') {
                     var btnId = item.id;
                     if (buttonsInFolders.indexOf(btnId) === -1) {
-                        var btn = currentButtons.find(function(b) { return getBtnIdentifier(b) === btnId; });
+                        var btn = currentButtons.find(function (b) { return getBtnIdentifier(b) === btnId; });
                         if (btn && !btn.hasClass('hidden')) {
                             targetContainer.append(btn);
                             visibleButtons.push(btn);
@@ -771,8 +771,8 @@
                     }
                 }
             });
-            
-            currentButtons.forEach(function(btn) {
+
+            currentButtons.forEach(function (btn) {
                 var btnId = getBtnIdentifier(btn);
                 if (addedButtons.indexOf(btnId) === -1 && !btn.hasClass('hidden') && buttonsInFolders.indexOf(btnId) === -1) {
                     var insertBefore = null;
@@ -780,19 +780,19 @@
                     var typeOrder = ['online', 'torrent', 'trailer', 'shots', 'book', 'reaction', 'subscribe', 'other'];
                     var btnTypeIndex = typeOrder.indexOf(btnType);
                     if (btnTypeIndex === -1) btnTypeIndex = 999;
-                    
+
                     if (btnId === 'modss_online_button' || btnId === 'showy_online_button') {
-                        var firstNonPriority = targetContainer.find('.full-start__button').not('.button--edit-order, .button--folder').filter(function() {
+                        var firstNonPriority = targetContainer.find('.full-start__button').not('.button--edit-order, .button--folder').filter(function () {
                             var id = getBtnIdentifier($(this));
                             return id !== 'modss_online_button' && id !== 'showy_online_button';
                         }).first();
-                        
+
                         if (firstNonPriority.length) {
                             insertBefore = firstNonPriority;
                         }
-                        
+
                         if (btnId === 'showy_online_button') {
-                            var modsBtn = targetContainer.find('.full-start__button').filter(function() {
+                            var modsBtn = targetContainer.find('.full-start__button').filter(function () {
                                 return getBtnIdentifier($(this)) === 'modss_online_button';
                             });
                             if (modsBtn.length) {
@@ -803,25 +803,25 @@
                             }
                         }
                     } else {
-                        targetContainer.find('.full-start__button').not('.button--edit-order, .button--folder').each(function() {
+                        targetContainer.find('.full-start__button').not('.button--edit-order, .button--folder').each(function () {
                             var existingBtn = $(this);
                             var existingId = getBtnIdentifier(existingBtn);
-                            
+
                             if (existingId === 'modss_online_button' || existingId === 'showy_online_button') {
                                 return true;
                             }
-                            
+
                             var existingType = detectBtnCategory(existingBtn);
                             var existingTypeIndex = typeOrder.indexOf(existingType);
                             if (existingTypeIndex === -1) existingTypeIndex = 999;
-                            
+
                             if (btnTypeIndex < existingTypeIndex) {
                                 insertBefore = existingBtn;
                                 return false;
                             }
                         });
                     }
-                    
+
                     if (insertBefore && insertBefore.length) {
                         btn.insertBefore(insertBefore);
                     } else {
@@ -835,8 +835,8 @@
                     visibleButtons.push(btn);
                 }
             });
-            
-            folders.forEach(function(folder) {
+
+            folders.forEach(function (folder) {
                 if (addedFolders.indexOf(folder.id) === -1) {
                     var folderBtn = createFolderButton(folder);
                     targetContainer.append(folderBtn);
@@ -844,15 +844,15 @@
                 }
             });
         } else {
-            currentButtons.forEach(function(btn) {
+            currentButtons.forEach(function (btn) {
                 var btnId = getBtnIdentifier(btn);
                 if (!btn.hasClass('hidden') && buttonsInFolders.indexOf(btnId) === -1) {
                     targetContainer.append(btn);
                     visibleButtons.push(btn);
                 }
             });
-            
-            folders.forEach(function(folder) {
+
+            folders.forEach(function (folder) {
                 var folderBtn = createFolderButton(folder);
                 targetContainer.append(folderBtn);
                 visibleButtons.push(folderBtn);
@@ -868,8 +868,8 @@
         }
 
         saveOrder();
-        
-        setTimeout(function() {
+
+        setTimeout(function () {
             if (currentContainer) {
                 setupButtonNavigation(currentContainer);
             }
@@ -885,10 +885,10 @@
         var text = btn.find('span').text().trim();
         var classes = btn.attr('class') || '';
         var subtitle = btn.attr('data-subtitle') || '';
-        
+
         if (!text) {
-            var viewClass = classes.split(' ').find(function(c) { 
-                return c.indexOf('view--') === 0 || c.indexOf('button--') === 0; 
+            var viewClass = classes.split(' ').find(function (c) {
+                return c.indexOf('view--') === 0 || c.indexOf('button--') === 0;
             });
             if (viewClass) {
                 text = viewClass.replace('view--', '').replace('button--', '').replace(/_/g, ' ');
@@ -898,21 +898,21 @@
             }
             return text;
         }
-        
+
         var sameTextCount = 0;
-        allButtons.forEach(function(otherBtn) {
+        allButtons.forEach(function (otherBtn) {
             if (otherBtn.find('span').text().trim() === text) {
                 sameTextCount++;
             }
         });
-        
+
         if (sameTextCount > 1) {
             if (subtitle) {
                 return text + ' <span style="opacity:0.5">(' + subtitle.substring(0, 30) + ')</span>';
             }
-            
-            var viewClass = classes.split(' ').find(function(c) { 
-                return c.indexOf('view--') === 0; 
+
+            var viewClass = classes.split(' ').find(function (c) {
+                return c.indexOf('view--') === 0;
             });
             if (viewClass) {
                 var identifier = viewClass.replace('view--', '').replace(/_/g, ' ');
@@ -920,7 +920,7 @@
                 return text + ' <span style="opacity:0.5">(' + identifier + ')</span>';
             }
         }
-        
+
         return text;
     }
 
@@ -928,22 +928,22 @@
         var firstBtnId = folder.buttons[0];
         var firstBtn = findButton(firstBtnId);
         var icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
-                '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>' +
+            '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>' +
             '</svg>';
-        
+
         if (firstBtn) {
             var btnIcon = firstBtn.find('svg').first();
             if (btnIcon.length) {
                 icon = btnIcon.prop('outerHTML');
             }
         }
-        
+
         var btn = $('<div class="full-start__button selector button--folder" data-folder-id="' + folder.id + '">' +
             icon +
             '<span>' + folder.name + '</span>' +
-        '</div>');
+            '</div>');
 
-        btn.on('hover:enter', function() {
+        btn.on('hover:enter', function () {
             openFolderMenu(folder);
         });
 
@@ -952,30 +952,30 @@
 
     function openFolderMenu(folder) {
         var items = [];
-        
-        folder.buttons.forEach(function(btnId) {
+
+        folder.buttons.forEach(function (btnId) {
             var btn = findButton(btnId);
             if (btn) {
                 var displayName = getBtnDisplayText(btn, allButtonsOriginal);
                 var iconElement = btn.find('svg').first();
                 var icon = iconElement.length ? iconElement.prop('outerHTML') : '';
                 var subtitle = btn.attr('data-subtitle') || '';
-                
+
                 var item = {
                     title: displayName.replace(/<[^>]*>/g, ''),
                     button: btn,
                     btnId: btnId
                 };
-                
+
                 if (icon) {
                     item.template = 'selectbox_icon';
                     item.icon = icon;
                 }
-                
+
                 if (subtitle) {
                     item.subtitle = subtitle;
                 }
-                
+
                 items.push(item);
             }
         });
@@ -988,14 +988,14 @@
         Lampa.Select.show({
             title: folder.name,
             items: items,
-            onSelect: function(item) {
+            onSelect: function (item) {
                 if (item.edit) {
                     openFolderEditDialog(folder);
                 } else {
                     item.button.trigger('hover:enter');
                 }
             },
-            onBack: function() {
+            onBack: function () {
                 Lampa.Controller.toggle('full_start');
             }
         });
@@ -1003,8 +1003,8 @@
 
     function openFolderEditDialog(folder) {
         var list = $('<div class="menu-edit-list"></div>');
-        
-        folder.buttons.forEach(function(btnId) {
+
+        folder.buttons.forEach(function (btnId) {
             var btn = findButton(btnId);
             if (btn) {
                 var displayName = getBtnDisplayText(btn, allButtonsOriginal);
@@ -1015,21 +1015,21 @@
                     '<div class="menu-edit-list__icon"></div>' +
                     '<div class="menu-edit-list__title">' + displayName + '</div>' +
                     '<div class="menu-edit-list__move move-up selector">' +
-                        '<svg width="22" height="14" viewBox="0 0 22 14" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-                            '<path d="M2 12L11 3L20 12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>' +
-                        '</svg>' +
+                    '<svg width="22" height="14" viewBox="0 0 22 14" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                    '<path d="M2 12L11 3L20 12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>' +
+                    '</svg>' +
                     '</div>' +
                     '<div class="menu-edit-list__move move-down selector">' +
-                        '<svg width="22" height="14" viewBox="0 0 22 14" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-                            '<path d="M2 2L11 11L20 2" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>' +
-                        '</svg>' +
+                    '<svg width="22" height="14" viewBox="0 0 22 14" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                    '<path d="M2 2L11 11L20 2" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>' +
+                    '</svg>' +
                     '</div>' +
-                '</div>');
+                    '</div>');
 
                 item.find('.menu-edit-list__icon').append(icon);
                 item.data('btnId', btnId);
 
-                item.find('.move-up').on('hover:enter', function() {
+                item.find('.move-up').on('hover:enter', function () {
                     var prev = item.prev();
                     if (prev.length) {
                         item.insertBefore(prev);
@@ -1037,7 +1037,7 @@
                     }
                 });
 
-                item.find('.move-down').on('hover:enter', function() {
+                item.find('.move-down').on('hover:enter', function () {
                     var next = item.next();
                     if (next.length) {
                         item.insertAfter(next);
@@ -1054,7 +1054,7 @@
             html: list,
             size: 'small',
             scroll_to_center: true,
-            onBack: function() {
+            onBack: function () {
                 Lampa.Modal.close();
                 updateFolderIcon(folder);
                 openFolderMenu(folder);
@@ -1064,13 +1064,13 @@
 
     function saveFolderButtonOrder(folder, list) {
         var newOrder = [];
-        list.find('.menu-edit-list__item').each(function() {
+        list.find('.menu-edit-list__item').each(function () {
             var btnId = $(this).data('btnId');
             newOrder.push(btnId);
         });
-        
+
         folder.buttons = newOrder;
-        
+
         var folders = getFolders();
         for (var i = 0; i < folders.length; i++) {
             if (folders[i].id === folder.id) {
@@ -1079,18 +1079,18 @@
             }
         }
         setFolders(folders);
-        
+
         updateFolderIcon(folder);
     }
 
     function updateFolderIcon(folder) {
         if (!folder.buttons || folder.buttons.length === 0) return;
-        
+
         var folderBtn = currentContainer.find('.button--folder[data-folder-id="' + folder.id + '"]');
         if (folderBtn.length) {
             var firstBtnId = folder.buttons[0];
             var firstBtn = findButton(firstBtnId);
-            
+
             if (firstBtn) {
                 var iconElement = firstBtn.find('svg').first();
                 if (iconElement.length) {
@@ -1100,7 +1100,7 @@
             } else {
                 var defaultIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
                     '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>' +
-                '</svg>';
+                    '</svg>';
                 folderBtn.find('svg').replaceWith(defaultIcon);
             }
         }
@@ -1120,7 +1120,7 @@
 
     function deleteFolder(folderId) {
         var folders = getFolders();
-        folders = folders.filter(function(f) { return f.id !== folderId; });
+        folders = folders.filter(function (f) { return f.id !== folderId; });
         setFolders(folders);
     }
 
@@ -1131,7 +1131,7 @@
             nosave: true,
             value: '',
             nomic: true
-        }, function(folderName) {
+        }, function (folderName) {
             if (!folderName || !folderName.trim()) {
                 Lampa.Noty.show(getTranslation('buttons_plugin_folder_name'));
                 openEditDialog();
@@ -1144,17 +1144,17 @@
     function openSelectButtonsDialog(folderName) {
         var selectedButtons = [];
         var list = $('<div class="menu-edit-list"></div>');
-        
+
         var buttonsInFolders = getButtonsInFolders();
         var sortedButtons = arrangeBtnsByOrder(allButtonsOriginal.slice());
 
-        sortedButtons.forEach(function(btn) {
+        sortedButtons.forEach(function (btn) {
             var btnId = getBtnIdentifier(btn);
-            
+
             if (buttonsInFolders.indexOf(btnId) !== -1) {
                 return;
             }
-            
+
             var displayName = getBtnDisplayText(btn, sortedButtons);
             var iconElement = btn.find('svg').first();
             var icon = iconElement.length ? iconElement.clone() : $('<svg></svg>');
@@ -1163,16 +1163,16 @@
                 '<div class="menu-edit-list__icon"></div>' +
                 '<div class="menu-edit-list__title">' + displayName + '</div>' +
                 '<div class="menu-edit-list__toggle selector">' +
-                    '<svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-                        '<rect x="1.89111" y="1.78369" width="21.793" height="21.793" rx="3.5" stroke="currentColor" stroke-width="3"/>' +
-                        '<path d="M7.44873 12.9658L10.8179 16.3349L18.1269 9.02588" stroke="currentColor" stroke-width="3" class="dot" opacity="0" stroke-linecap="round"/>' +
-                    '</svg>' +
+                '<svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                '<rect x="1.89111" y="1.78369" width="21.793" height="21.793" rx="3.5" stroke="currentColor" stroke-width="3"/>' +
+                '<path d="M7.44873 12.9658L10.8179 16.3349L18.1269 9.02588" stroke="currentColor" stroke-width="3" class="dot" opacity="0" stroke-linecap="round"/>' +
+                '</svg>' +
                 '</div>' +
-            '</div>');
+                '</div>');
 
             item.find('.menu-edit-list__icon').append(icon);
 
-            item.find('.menu-edit-list__toggle').on('hover:enter', function() {
+            item.find('.menu-edit-list__toggle').on('hover:enter', function () {
                 var index = selectedButtons.indexOf(btnId);
                 if (index !== -1) {
                     selectedButtons.splice(index, 1);
@@ -1188,32 +1188,32 @@
 
         var createBtn = $('<div class="selector folder-create-confirm">' +
             '<div style="text-align: center; padding: 1em;">' + getTranslation('buttons_plugin_create_folder') + ' "' + folderName + '"</div>' +
-        '</div>');
-        
-        createBtn.on('hover:enter', function() {
+            '</div>');
+
+        createBtn.on('hover:enter', function () {
             if (selectedButtons.length < 2) {
                 Lampa.Noty.show(getTranslation('buttons_plugin_min_2_buttons'));
                 return;
             }
 
             var folder = createFolder(folderName, selectedButtons);
-            
+
             var itemOrder = getItemOrder();
-            
+
             if (itemOrder.length === 0) {
-                currentButtons.forEach(function(btn) {
+                currentButtons.forEach(function (btn) {
                     itemOrder.push({
                         type: 'button',
                         id: getBtnIdentifier(btn)
                     });
                 });
             }
-            
+
             var folderAdded = false;
-            
+
             for (var i = 0; i < selectedButtons.length; i++) {
                 var btnId = selectedButtons[i];
-                
+
                 for (var j = 0; j < itemOrder.length; j++) {
                     if (itemOrder[j].type === 'button' && itemOrder[j].id === btnId) {
                         if (!folderAdded) {
@@ -1229,7 +1229,7 @@
                         break;
                     }
                 }
-                
+
                 for (var k = 0; k < currentButtons.length; k++) {
                     if (getBtnIdentifier(currentButtons[k]) === btnId) {
                         currentButtons.splice(k, 1);
@@ -1237,19 +1237,19 @@
                     }
                 }
             }
-            
+
             if (!folderAdded) {
                 itemOrder.push({
                     type: 'folder',
                     id: folder.id
                 });
             }
-            
+
             setItemOrder(itemOrder);
-            
+
             Lampa.Modal.close();
             Lampa.Noty.show(getTranslation('buttons_plugin_folder_created') + ' "' + folderName + '"');
-            
+
             if (currentContainer) {
                 currentContainer.data('buttons-processed', false);
                 reorderButtons(currentContainer);
@@ -1264,7 +1264,7 @@
             html: list,
             size: 'medium',
             scroll_to_center: true,
-            onBack: function() {
+            onBack: function () {
                 Lampa.Modal.close();
                 openEditDialog();
             }
@@ -1283,23 +1283,23 @@
                 .concat(categories.reaction)
                 .concat(categories.subscribe)
                 .concat(categories.other);
-            
+
             allButtons = arrangeBtnsByOrder(allButtons);
             allButtonsCache = allButtons;
-            
+
             var folders = getFolders();
             var buttonsInFolders = [];
-            folders.forEach(function(folder) {
+            folders.forEach(function (folder) {
                 buttonsInFolders = buttonsInFolders.concat(folder.buttons);
             });
-            
-            var filteredButtons = allButtons.filter(function(btn) {
+
+            var filteredButtons = allButtons.filter(function (btn) {
                 return buttonsInFolders.indexOf(getBtnIdentifier(btn)) === -1;
             });
-            
+
             currentButtons = filteredButtons;
         }
-        
+
         var list = $('<div class="menu-edit-list"></div>');
         var hidden = getHiddenButtons();
         var folders = getFolders();
@@ -1307,16 +1307,16 @@
 
         var createFolderBtn = $('<div class="menu-edit-list__item menu-edit-list__create-folder selector">' +
             '<div class="menu-edit-list__icon">' +
-                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
-                    '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>' +
-                    '<line x1="12" y1="11" x2="12" y2="17"></line>' +
-                    '<line x1="9" y1="14" x2="15" y2="14"></line>' +
-                '</svg>' +
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+            '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>' +
+            '<line x1="12" y1="11" x2="12" y2="17"></line>' +
+            '<line x1="9" y1="14" x2="15" y2="14"></line>' +
+            '</svg>' +
             '</div>' +
             '<div class="menu-edit-list__title">' + getTranslation('buttons_plugin_create_folder') + '</div>' +
-        '</div>');
+            '</div>');
 
-        createFolderBtn.on('hover:enter', function() {
+        createFolderBtn.on('hover:enter', function () {
             Lampa.Modal.close();
             openCreateFolderDialog();
         });
@@ -1330,39 +1330,39 @@
             '<div class="menu-edit-list__header-move">' + getTranslation('buttons_plugin_move') + '</div>' +
             '<div class="menu-edit-list__header-mode">' + getTranslation('buttons_plugin_view') + '</div>' +
             '<div class="menu-edit-list__header-toggle">' + getTranslation('buttons_plugin_show') + '</div>' +
-        '</div>');
+            '</div>');
         list.append(header);
 
         function createFolderItem(folder) {
             var item = $('<div class="menu-edit-list__item folder-item">' +
                 '<div class="menu-edit-list__icon">' +
-                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
-                        '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>' +
-                    '</svg>' +
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+                '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>' +
+                '</svg>' +
                 '</div>' +
                 '<div class="menu-edit-list__title">' + folder.name + ' <span style="opacity:0.5">(' + folder.buttons.length + ')</span></div>' +
                 '<div class="menu-edit-list__move move-up selector">' +
-                    '<svg width="22" height="14" viewBox="0 0 22 14" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-                        '<path d="M2 12L11 3L20 12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>' +
-                    '</svg>' +
+                '<svg width="22" height="14" viewBox="0 0 22 14" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                '<path d="M2 12L11 3L20 12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>' +
+                '</svg>' +
                 '</div>' +
                 '<div class="menu-edit-list__move move-down selector">' +
-                    '<svg width="22" height="14" viewBox="0 0 22 14" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-                        '<path d="M2 2L11 11L20 2" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>' +
-                    '</svg>' +
+                '<svg width="22" height="14" viewBox="0 0 22 14" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                '<path d="M2 2L11 11L20 2" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>' +
+                '</svg>' +
                 '</div>' +
                 '<div class="menu-edit-list__delete selector">' +
-                    '<svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-                        '<rect x="1.89111" y="1.78369" width="21.793" height="21.793" rx="3.5" stroke="currentColor" stroke-width="3"/>' +
-                        '<path d="M9.5 9.5L16.5 16.5M16.5 9.5L9.5 16.5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>' +
-                    '</svg>' +
+                '<svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                '<rect x="1.89111" y="1.78369" width="21.793" height="21.793" rx="3.5" stroke="currentColor" stroke-width="3"/>' +
+                '<path d="M9.5 9.5L16.5 16.5M16.5 9.5L9.5 16.5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>' +
+                '</svg>' +
                 '</div>' +
-            '</div>');
+                '</div>');
 
             item.data('folderId', folder.id);
             item.data('itemType', 'folder');
 
-            item.find('.move-up').on('hover:enter', function() {
+            item.find('.move-up').on('hover:enter', function () {
                 var prev = item.prev();
                 while (prev.length && prev.hasClass('menu-edit-list__create-folder')) {
                     prev = prev.prev();
@@ -1373,7 +1373,7 @@
                 }
             });
 
-            item.find('.move-down').on('hover:enter', function() {
+            item.find('.move-down').on('hover:enter', function () {
                 var next = item.next();
                 while (next.length && next.hasClass('folder-reset-button')) {
                     next = next.next();
@@ -1384,15 +1384,15 @@
                 }
             });
 
-            item.find('.menu-edit-list__delete').on('hover:enter', function() {
+            item.find('.menu-edit-list__delete').on('hover:enter', function () {
                 var folderId = folder.id;
                 var folderButtons = folder.buttons.slice();
-                
+
                 deleteFolder(folderId);
-                
+
                 var itemOrder = getItemOrder();
                 var newItemOrder = [];
-                
+
                 for (var i = 0; i < itemOrder.length; i++) {
                     if (itemOrder[i].type === 'folder' && itemOrder[i].id === folderId) {
                         continue;
@@ -1411,9 +1411,9 @@
                     }
                     newItemOrder.push(itemOrder[i]);
                 }
-                
+
                 setItemOrder(newItemOrder);
-                
+
                 var customOrder = getCustomOrder();
                 var newCustomOrder = [];
                 for (var i = 0; i < customOrder.length; i++) {
@@ -1429,29 +1429,29 @@
                     }
                 }
                 setCustomOrder(newCustomOrder);
-                
+
                 item.remove();
                 Lampa.Noty.show(getTranslation('buttons_plugin_folder_deleted'));
-                
-                setTimeout(function() {
+
+                setTimeout(function () {
                     if (currentContainer) {
                         currentContainer.find('.button--play, .button--edit-order, .button--folder').remove();
                         currentContainer.data('buttons-processed', false);
-                        
+
                         var targetContainer = currentContainer.find('.full-start-new__buttons');
                         var existingButtons = targetContainer.find('.full-start__button').toArray();
-                        
-                        allButtonsOriginal.forEach(function(originalBtn) {
+
+                        allButtonsOriginal.forEach(function (originalBtn) {
                             var btnId = getBtnIdentifier(originalBtn);
                             var exists = false;
-                            
+
                             for (var i = 0; i < existingButtons.length; i++) {
                                 if (getBtnIdentifier($(existingButtons[i])) === btnId) {
                                     exists = true;
                                     break;
                                 }
                             }
-                            
+
                             if (!exists) {
                                 var clonedBtn = originalBtn.clone(true, true);
                                 clonedBtn.css({
@@ -1461,12 +1461,12 @@
                                 targetContainer.append(clonedBtn);
                             }
                         });
-                        
+
                         reorderButtons(currentContainer);
-                        
-                        setTimeout(function() {
+
+                        setTimeout(function () {
                             var updatedItemOrder = [];
-                            targetContainer.find('.full-start__button').not('.button--edit-order').each(function() {
+                            targetContainer.find('.full-start__button').not('.button--edit-order').each(function () {
                                 var $btn = $(this);
                                 if ($btn.hasClass('button--folder')) {
                                     var fId = $btn.attr('data-folder-id');
@@ -1483,7 +1483,7 @@
                                 }
                             });
                             setItemOrder(updatedItemOrder);
-                            
+
                             var categories = groupBtnsByType(currentContainer);
                             var allButtons = []
                                 .concat(categories.online)
@@ -1494,41 +1494,41 @@
                                 .concat(categories.reaction)
                                 .concat(categories.subscribe)
                                 .concat(categories.other);
-                            
+
                             allButtons = arrangeBtnsByOrder(allButtons);
                             allButtonsCache = allButtons;
-                            
+
                             var folders = getFolders();
                             var buttonsInFolders = [];
-                            folders.forEach(function(folder) {
+                            folders.forEach(function (folder) {
                                 buttonsInFolders = buttonsInFolders.concat(folder.buttons);
                             });
-                            
-                            var filteredButtons = allButtons.filter(function(btn) {
+
+                            var filteredButtons = allButtons.filter(function (btn) {
                                 return buttonsInFolders.indexOf(getBtnIdentifier(btn)) === -1;
                             });
-                            
+
                             currentButtons = filteredButtons;
-                            
-                            folderButtons.forEach(function(btnId) {
-                                var btn = allButtons.find(function(b) { return getBtnIdentifier(b) === btnId; });
+
+                            folderButtons.forEach(function (btnId) {
+                                var btn = allButtons.find(function (b) { return getBtnIdentifier(b) === btnId; });
                                 if (btn) {
                                     var btnItem = createButtonItem(btn);
-                                    
+
                                     var inserted = false;
-                                    list.find('.menu-edit-list__item').not('.menu-edit-list__create-folder, .folder-reset-button').each(function() {
+                                    list.find('.menu-edit-list__item').not('.menu-edit-list__create-folder, .folder-reset-button').each(function () {
                                         var $existingItem = $(this);
                                         var existingType = $existingItem.data('itemType');
-                                        
+
                                         if (existingType === 'button') {
                                             var existingBtnId = $existingItem.data('buttonId');
-                                            var existingIndex = updatedItemOrder.findIndex(function(item) {
+                                            var existingIndex = updatedItemOrder.findIndex(function (item) {
                                                 return item.type === 'button' && item.id === existingBtnId;
                                             });
-                                            var newIndex = updatedItemOrder.findIndex(function(item) {
+                                            var newIndex = updatedItemOrder.findIndex(function (item) {
                                                 return item.type === 'button' && item.id === btnId;
                                             });
-                                            
+
                                             if (newIndex !== -1 && existingIndex !== -1 && newIndex < existingIndex) {
                                                 btnItem.insertBefore($existingItem);
                                                 inserted = true;
@@ -1536,7 +1536,7 @@
                                             }
                                         }
                                     });
-                                    
+
                                     if (!inserted) {
                                         var resetButton = list.find('.folder-reset-button');
                                         if (resetButton.length) {
@@ -1547,17 +1547,17 @@
                                     }
                                 }
                             });
-                            
-                            setTimeout(function() {
+
+                            setTimeout(function () {
                                 try {
                                     Lampa.Controller.toggle('modal');
-                                } catch(e) {}
+                                } catch (e) { }
                             }, 100);
                         }, 100);
                     }
                 }, 50);
             });
-            
+
             return item;
         }
 
@@ -1572,35 +1572,35 @@
                 '<div class="menu-edit-list__icon"></div>' +
                 '<div class="menu-edit-list__title">' + displayName + '</div>' +
                 '<div class="menu-edit-list__move move-up selector">' +
-                    '<svg width="22" height="14" viewBox="0 0 22 14" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-                        '<path d="M2 12L11 3L20 12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>' +
-                    '</svg>' +
+                '<svg width="22" height="14" viewBox="0 0 22 14" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                '<path d="M2 12L11 3L20 12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>' +
+                '</svg>' +
                 '</div>' +
                 '<div class="menu-edit-list__move move-down selector">' +
-                    '<svg width="22" height="14" viewBox="0 0 22 14" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-                        '<path d="M2 2L11 11L20 2" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>' +
-                    '</svg>' +
+                '<svg width="22" height="14" viewBox="0 0 22 14" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                '<path d="M2 2L11 11L20 2" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>' +
+                '</svg>' +
                 '</div>' +
                 '<div class="menu-edit-list__display-mode selector" data-mode="' + displayMode + '">' +
-                    '<svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-                        '<rect x="1.89111" y="1.78369" width="21.793" height="21.793" rx="3.5" stroke="currentColor" stroke-width="3"/>' +
-                        '<text x="13" y="17" text-anchor="middle" fill="currentColor" font-size="12" font-weight="bold" class="mode-number">' + displayMode + '</text>' +
-                    '</svg>' +
+                '<svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                '<rect x="1.89111" y="1.78369" width="21.793" height="21.793" rx="3.5" stroke="currentColor" stroke-width="3"/>' +
+                '<text x="13" y="17" text-anchor="middle" fill="currentColor" font-size="12" font-weight="bold" class="mode-number">' + displayMode + '</text>' +
+                '</svg>' +
                 '</div>' +
                 '<div class="menu-edit-list__toggle toggle selector">' +
-                    '<svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-                        '<rect x="1.89111" y="1.78369" width="21.793" height="21.793" rx="3.5" stroke="currentColor" stroke-width="3"/>' +
-                        '<path d="M7.44873 12.9658L10.8179 16.3349L18.1269 9.02588" stroke="currentColor" stroke-width="3" class="dot" opacity="' + (isHidden ? '0' : '1') + '" stroke-linecap="round"/>' +
-                    '</svg>' +
+                '<svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                '<rect x="1.89111" y="1.78369" width="21.793" height="21.793" rx="3.5" stroke="currentColor" stroke-width="3"/>' +
+                '<path d="M7.44873 12.9658L10.8179 16.3349L18.1269 9.02588" stroke="currentColor" stroke-width="3" class="dot" opacity="' + (isHidden ? '0' : '1') + '" stroke-linecap="round"/>' +
+                '</svg>' +
                 '</div>' +
-            '</div>');
+                '</div>');
 
             item.find('.menu-edit-list__icon').append(icon);
             item.data('button', btn);
             item.data('buttonId', btnId);
             item.data('itemType', 'button');
 
-            item.find('.move-up').on('hover:enter', function() {
+            item.find('.move-up').on('hover:enter', function () {
                 var prev = item.prev();
                 while (prev.length && prev.hasClass('menu-edit-list__create-folder')) {
                     prev = prev.prev();
@@ -1616,7 +1616,7 @@
                 }
             });
 
-            item.find('.move-down').on('hover:enter', function() {
+            item.find('.move-down').on('hover:enter', function () {
                 var next = item.next();
                 while (next.length && next.hasClass('folder-reset-button')) {
                     next = next.next();
@@ -1632,24 +1632,24 @@
                 }
             });
 
-            item.find('.menu-edit-list__display-mode').on('hover:enter', function() {
+            item.find('.menu-edit-list__display-mode').on('hover:enter', function () {
                 var currentMode = parseInt($(this).attr('data-mode')) || 1;
                 var newMode = currentMode >= 3 ? 1 : currentMode + 1;
-                
+
                 $(this).attr('data-mode', newMode);
                 $(this).find('.mode-number').text(newMode);
-                
+
                 setButtonDisplayMode(btnId, newMode);
-                
+
                 // Применяем режим к кнопке
                 btn.removeClass('button-mode-1 button-mode-2 button-mode-3');
                 btn.addClass('button-mode-' + newMode);
             });
 
-            item.find('.toggle').on('hover:enter', function() {
+            item.find('.toggle').on('hover:enter', function () {
                 var hidden = getHiddenButtons();
                 var index = hidden.indexOf(btnId);
-                
+
                 if (index !== -1) {
                     hidden.splice(index, 1);
                     btn.removeClass('hidden');
@@ -1661,40 +1661,40 @@
                     item.find('.dot').attr('opacity', '0');
                     item.addClass('item-hidden');
                 }
-                
+
                 setHiddenButtons(hidden);
             });
-            
+
             return item;
         }
-        
+
         if (itemOrder.length > 0) {
-            itemOrder.forEach(function(item) {
+            itemOrder.forEach(function (item) {
                 if (item.type === 'folder') {
-                    var folder = folders.find(function(f) { return f.id === item.id; });
+                    var folder = folders.find(function (f) { return f.id === item.id; });
                     if (folder) {
                         list.append(createFolderItem(folder));
                     }
                 } else if (item.type === 'button') {
-                    var btn = currentButtons.find(function(b) { return getBtnIdentifier(b) === item.id; });
+                    var btn = currentButtons.find(function (b) { return getBtnIdentifier(b) === item.id; });
                     if (btn) {
                         list.append(createButtonItem(btn));
                     }
                 }
             });
-            
-            currentButtons.forEach(function(btn) {
+
+            currentButtons.forEach(function (btn) {
                 var btnId = getBtnIdentifier(btn);
-                var found = itemOrder.some(function(item) {
+                var found = itemOrder.some(function (item) {
                     return item.type === 'button' && item.id === btnId;
                 });
                 if (!found) {
                     list.append(createButtonItem(btn));
                 }
             });
-            
-            folders.forEach(function(folder) {
-                var found = itemOrder.some(function(item) {
+
+            folders.forEach(function (folder) {
+                var found = itemOrder.some(function (item) {
                     return item.type === 'folder' && item.id === folder.id;
                 });
                 if (!found) {
@@ -1702,22 +1702,22 @@
                 }
             });
         } else {
-            folders.forEach(function(folder) {
+            folders.forEach(function (folder) {
                 list.append(createFolderItem(folder));
             });
-            
-            currentButtons.forEach(function(btn) {
+
+            currentButtons.forEach(function (btn) {
                 list.append(createButtonItem(btn));
             });
         }
 
         var resetBtn = $('<div class="selector folder-reset-button">' +
             '<div style="text-align: center; padding: 1em;">' + getTranslation('buttons_plugin_reset_default') + '</div>' +
-        '</div>');
-        
-        resetBtn.on('hover:enter', function() {
+            '</div>');
+
+        resetBtn.on('hover:enter', function () {
             var folders = getFolders();
-            
+
             Lampa.Storage.set('button_custom_order', []);
             Lampa.Storage.set('button_hidden', []);
             Lampa.Storage.set('button_folders', []);
@@ -1725,26 +1725,26 @@
             Lampa.Storage.set('button_display_modes', {}); // Сброс режимов отображения
             Lampa.Modal.close();
             Lampa.Noty.show(getTranslation('buttons_plugin_settings_reset'));
-            
-            setTimeout(function() {
+
+            setTimeout(function () {
                 if (currentContainer) {
                     currentContainer.find('.button--play, .button--edit-order, .button--folder').remove();
                     currentContainer.data('buttons-processed', false);
-                    
+
                     var targetContainer = currentContainer.find('.full-start-new__buttons');
                     var existingButtons = targetContainer.find('.full-start__button').toArray();
-                    
-                    allButtonsOriginal.forEach(function(originalBtn) {
+
+                    allButtonsOriginal.forEach(function (originalBtn) {
                         var btnId = getBtnIdentifier(originalBtn);
                         var exists = false;
-                        
+
                         for (var i = 0; i < existingButtons.length; i++) {
                             if (getBtnIdentifier($(existingButtons[i])) === btnId) {
                                 exists = true;
                                 break;
                             }
                         }
-                        
+
                         if (!exists) {
                             var clonedBtn = originalBtn.clone(true, true);
                             clonedBtn.css({
@@ -1754,7 +1754,7 @@
                             targetContainer.append(clonedBtn);
                         }
                     });
-                    
+
                     reorderButtons(currentContainer);
                     refreshController();
                 }
@@ -1768,7 +1768,7 @@
             html: list,
             size: 'small',
             scroll_to_center: true,
-            onBack: function() {
+            onBack: function () {
                 Lampa.Modal.close();
                 applyChanges();
                 Lampa.Controller.toggle('full_start');
@@ -1776,7 +1776,7 @@
         });
     }
 
-    function reorderButtons(container) {
+    function reorderButtons(container, isFreshRender) {
         var targetContainer = container.find('.full-start-new__buttons');
         if (!targetContainer.length) return false;
 
@@ -1784,7 +1784,7 @@
         container.find('.button--play, .button--edit-order, .button--folder').remove();
 
         var categories = groupBtnsByType(container);
-        
+
         var allButtons = []
             .concat(categories.online)
             .concat(categories.torrent)
@@ -1797,20 +1797,21 @@
 
         allButtons = arrangeBtnsByOrder(allButtons);
         allButtonsCache = allButtons;
-        
-        if (allButtonsOriginal.length === 0) {
-            allButtons.forEach(function(btn) {
+
+        if (isFreshRender || allButtonsOriginal.length === 0) {
+            allButtonsOriginal = [];
+            allButtons.forEach(function (btn) {
                 allButtonsOriginal.push(btn.clone(true, true));
             });
         }
 
         var folders = getFolders();
         var buttonsInFolders = [];
-        folders.forEach(function(folder) {
+        folders.forEach(function (folder) {
             buttonsInFolders = buttonsInFolders.concat(folder.buttons);
         });
 
-        var filteredButtons = allButtons.filter(function(btn) {
+        var filteredButtons = allButtons.filter(function (btn) {
             return buttonsInFolders.indexOf(getBtnIdentifier(btn)) === -1;
         });
 
@@ -1819,17 +1820,17 @@
         applyButtonDisplayModes(filteredButtons);
 
         targetContainer.children().detach();
-        
+
         var visibleButtons = [];
         var itemOrder = getItemOrder();
-        
+
         if (itemOrder.length > 0) {
             var addedFolders = [];
             var addedButtons = [];
-            
-            itemOrder.forEach(function(item) {
+
+            itemOrder.forEach(function (item) {
                 if (item.type === 'folder') {
-                    var folder = folders.find(function(f) { return f.id === item.id; });
+                    var folder = folders.find(function (f) { return f.id === item.id; });
                     if (folder) {
                         var folderBtn = createFolderButton(folder);
                         targetContainer.append(folderBtn);
@@ -1837,7 +1838,7 @@
                         addedFolders.push(folder.id);
                     }
                 } else if (item.type === 'button') {
-                    var btn = filteredButtons.find(function(b) { return getBtnIdentifier(b) === item.id; });
+                    var btn = filteredButtons.find(function (b) { return getBtnIdentifier(b) === item.id; });
                     if (btn && !btn.hasClass('hidden')) {
                         targetContainer.append(btn);
                         visibleButtons.push(btn);
@@ -1845,8 +1846,8 @@
                     }
                 }
             });
-            
-            filteredButtons.forEach(function(btn) {
+
+            filteredButtons.forEach(function (btn) {
                 var btnId = getBtnIdentifier(btn);
                 if (addedButtons.indexOf(btnId) === -1 && !btn.hasClass('hidden')) {
                     var insertBefore = null;
@@ -1854,19 +1855,19 @@
                     var typeOrder = ['online', 'torrent', 'trailer', 'shots', 'book', 'reaction', 'subscribe', 'other'];
                     var btnTypeIndex = typeOrder.indexOf(btnType);
                     if (btnTypeIndex === -1) btnTypeIndex = 999;
-                    
+
                     if (btnId === 'modss_online_button' || btnId === 'showy_online_button') {
-                        var firstNonPriority = targetContainer.find('.full-start__button').not('.button--edit-order, .button--folder').filter(function() {
+                        var firstNonPriority = targetContainer.find('.full-start__button').not('.button--edit-order, .button--folder').filter(function () {
                             var id = getBtnIdentifier($(this));
                             return id !== 'modss_online_button' && id !== 'showy_online_button';
                         }).first();
-                        
+
                         if (firstNonPriority.length) {
                             insertBefore = firstNonPriority;
                         }
-                        
+
                         if (btnId === 'showy_online_button') {
-                            var modsBtn = targetContainer.find('.full-start__button').filter(function() {
+                            var modsBtn = targetContainer.find('.full-start__button').filter(function () {
                                 return getBtnIdentifier($(this)) === 'modss_online_button';
                             });
                             if (modsBtn.length) {
@@ -1877,25 +1878,25 @@
                             }
                         }
                     } else {
-                        targetContainer.find('.full-start__button').not('.button--edit-order, .button--folder').each(function() {
+                        targetContainer.find('.full-start__button').not('.button--edit-order, .button--folder').each(function () {
                             var existingBtn = $(this);
                             var existingId = getBtnIdentifier(existingBtn);
-                            
+
                             if (existingId === 'modss_online_button' || existingId === 'showy_online_button') {
                                 return true;
                             }
-                            
+
                             var existingType = detectBtnCategory(existingBtn);
                             var existingTypeIndex = typeOrder.indexOf(existingType);
                             if (existingTypeIndex === -1) existingTypeIndex = 999;
-                            
+
                             if (btnTypeIndex < existingTypeIndex) {
                                 insertBefore = existingBtn;
                                 return false;
                             }
                         });
                     }
-                    
+
                     if (insertBefore && insertBefore.length) {
                         btn.insertBefore(insertBefore);
                     } else {
@@ -1904,8 +1905,8 @@
                     visibleButtons.push(btn);
                 }
             });
-            
-            folders.forEach(function(folder) {
+
+            folders.forEach(function (folder) {
                 if (addedFolders.indexOf(folder.id) === -1) {
                     var folderBtn = createFolderButton(folder);
                     targetContainer.append(folderBtn);
@@ -1913,13 +1914,13 @@
                 }
             });
         } else {
-            folders.forEach(function(folder) {
+            folders.forEach(function (folder) {
                 var folderBtn = createFolderButton(folder);
                 targetContainer.append(folderBtn);
                 visibleButtons.push(folderBtn);
             });
-            
-            filteredButtons.forEach(function(btn) {
+
+            filteredButtons.forEach(function (btn) {
                 if (!btn.hasClass('hidden')) {
                     targetContainer.append(btn);
                     visibleButtons.push(btn);
@@ -1932,8 +1933,8 @@
         visibleButtons.push(editButton);
 
         animateBtnFadeIn(visibleButtons);
-        
-        setTimeout(function() {
+
+        setTimeout(function () {
             setupButtonNavigation(container);
         }, 100);
 
@@ -1946,23 +1947,23 @@
         if (Lampa.Controller && typeof Lampa.Controller.toggle === 'function') {
             try {
                 Lampa.Controller.toggle('full_start');
-            } catch(e) {}
+            } catch (e) { }
         }
     }
 
     function refreshController() {
         if (!Lampa.Controller || typeof Lampa.Controller.toggle !== 'function') return;
-        
-        setTimeout(function() {
+
+        setTimeout(function () {
             try {
                 Lampa.Controller.toggle('full_start');
-                
+
                 if (currentContainer) {
-                    setTimeout(function() {
+                    setTimeout(function () {
                         setupButtonNavigation(currentContainer);
                     }, 100);
                 }
-            } catch(e) {}
+            } catch (e) { }
         }, 50);
     }
 
@@ -1973,10 +1974,10 @@
             '.full-start__button.hidden { display: none !important; }' +
             '.button--folder { cursor: pointer; }' +
             '.full-start-new__buttons { ' +
-                'display: flex !important; ' +
-                'flex-direction: row !important; ' +
-                'flex-wrap: wrap !important; ' +
-                'gap: 0.5em !important; ' +
+            'display: flex !important; ' +
+            'flex-direction: row !important; ' +
+            'flex-wrap: wrap !important; ' +
+            'gap: 0.5em !important; ' +
             '}' +
             '.full-start-new__buttons.buttons-loading .full-start__button { visibility: hidden !important; }' +
             '.menu-edit-list__create-folder { background: rgba(100,200,100,0.2); }' +
@@ -2028,10 +2029,10 @@
             '/* Режим 3: Иконка + текст всегда */' +
             '.full-start__button.button-mode-3 .text-wrapper { display: inline !important; }' +
             '.full-start__button.button-mode-3 > span:not(.text-wrapper) { opacity: 1 !important; display: inline !important; }' +
-        '</style>');
+            '</style>');
         $('body').append(style);
 
-        Lampa.Listener.follow('full', function(e) {
+        Lampa.Listener.follow('full', function (e) {
             if (e.type !== 'complite') return;
 
             var container = e.object.activity.render();
@@ -2040,18 +2041,18 @@
                 targetContainer.addClass('buttons-loading');
             }
 
-            setTimeout(function() {
+            setTimeout(function () {
                 try {
                     if (!container.data('buttons-processed')) {
                         container.data('buttons-processed', true);
-                        if (reorderButtons(container)) {
+                        if (reorderButtons(container, true)) {
                             if (targetContainer.length) {
                                 targetContainer.removeClass('buttons-loading');
                             }
                             refreshController();
                         }
                     }
-                } catch(err) {
+                } catch (err) {
                     if (targetContainer.length) {
                         targetContainer.removeClass('buttons-loading');
                     }
@@ -2072,8 +2073,8 @@
             field: {
                 name: getTranslation('buttons_plugin_button_editor')
             },
-            onChange: function(value) {
-                setTimeout(function() {
+            onChange: function (value) {
+                setTimeout(function () {
                     var currentValue = Lampa.Storage.get('buttons_editor_enabled', true);
                     if (currentValue) {
                         $('.button--edit-order').show();
@@ -2084,8 +2085,8 @@
                     }
                 }, 100);
             },
-            onRender: function(element) {
-                setTimeout(function() {
+            onRender: function (element) {
+                setTimeout(function () {
                     // Вставляем после "Показать реакции" в разделе "Карточка"
                     var reactionsParam = $('div[data-name="card_interfice_reactions"]');
                     if (reactionsParam.length) {
